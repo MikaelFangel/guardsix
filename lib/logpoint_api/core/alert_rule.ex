@@ -5,6 +5,7 @@ defmodule LogpointApi.Core.AlertRule do
 
   def create_alert_rule(req, token, alert_rule) do
     # TODO Implement
+    raise "not yet implemented"
   end
 
   def list_alert_rules(req, token, params \\ %{}) do
@@ -17,6 +18,7 @@ defmodule LogpointApi.Core.AlertRule do
 
   def update_alert_rule(req, token, id, alert_rule) do
     # TODO Implement
+    raise "not yet implemented"
   end
 
   def delete_alert_rules(req, token, ids) when is_list(ids) do
@@ -40,6 +42,7 @@ defmodule LogpointApi.Core.AlertRule do
 
   def update_alert_notifactions(req, token, alert_ids, notification) do
     # TODO Implement multihead one for email and one for http
+    raise "not yet implemented"
   end
 
   def list_all_lopoints_with_repos(req, token) do
