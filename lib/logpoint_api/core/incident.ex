@@ -1,53 +1,95 @@
 defmodule LogpointApi.Core.Incident do
   @moduledoc false
+
+  alias LogpointApi.Data.Client
   alias LogpointApi.Net.SearchIncidentClient
 
   @version "0.1"
 
-  def list_incidents(req, credential, start_time, end_time, opts \\ []) do
+  @doc """
+  List incidents within a time range.
+  """
+  @spec list(Client.t(), number(), number()) :: {:ok, map()} | {:error, term()}
+  def list(%Client{} = client, start_time, end_time) do
     body = create_request(%{version: @version, ts_from: start_time, ts_to: end_time})
-
-    if Keyword.get(opts, :state) do
-      SearchIncidentClient.get(req, "/incident_states", credential, body)
-    else
-      SearchIncidentClient.get(req, "/incidents", credential, body)
-    end
-  end
-
-  def get_incident_by_ids(req, credential, obj_id, incident_id) do
-    body = create_request(%{incident_obj_id: obj_id, incident_id: incident_id})
-    SearchIncidentClient.get(req, "/get_data_from_incident", credential, body)
-  end
-
-  # TODO: check for better validation of comments
-  def add_comments(req, credential, comments) do
-    body = create_request(%{version: @version, states: comments})
-    SearchIncidentClient.post_json(req, "/add_incident_comment", credential, body)
-  end
-
-  def assign_incidents(req, credential, incident_ids, assignee) when is_list(incident_ids) do
-    body = create_request(%{version: @version, incident_ids: incident_ids, new_assignee: assignee})
-    SearchIncidentClient.post_json(req, "/assign_incident", credential, body)
-  end
-
-  def change_incident_status(req, credential, action, incident_ids)
-      when action in [:resolve, :reopen, :close] and is_list(incident_ids) do
-    endpoint =
-      case action do
-        :resolve -> "/resolve_incident"
-        :reopen -> "/reopen_incident"
-        :close -> "/close_incident"
-      end
-
-    body = create_request(%{version: @version, incident_ids: incident_ids})
-    SearchIncidentClient.post_json(req, endpoint, credential, body)
+    SearchIncidentClient.get(req(client), "/incidents", client.credential, body)
   end
 
   @doc """
-  Gets users from the Logpoint instance.
+  List incident states within a time range.
   """
-  def get_users(req, credential) do
-    SearchIncidentClient.get(req, "/get_users", credential)
+  @spec list_states(Client.t(), number(), number()) :: {:ok, map()} | {:error, term()}
+  def list_states(%Client{} = client, start_time, end_time) do
+    body = create_request(%{version: @version, ts_from: start_time, ts_to: end_time})
+    SearchIncidentClient.get(req(client), "/incident_states", client.credential, body)
+  end
+
+  @doc """
+  Get incident data by object ID and incident ID.
+  """
+  @spec get(Client.t(), String.t(), String.t()) :: {:ok, map()} | {:error, term()}
+  def get(%Client{} = client, obj_id, incident_id) do
+    body = create_request(%{incident_obj_id: obj_id, incident_id: incident_id})
+    SearchIncidentClient.get(req(client), "/get_data_from_incident", client.credential, body)
+  end
+
+  @doc """
+  Add comments to incidents.
+  """
+  @spec add_comments(Client.t(), list()) :: {:ok, map()} | {:error, term()}
+  def add_comments(%Client{} = client, comments) do
+    body = create_request(%{version: @version, states: comments})
+    SearchIncidentClient.post_json(req(client), "/add_incident_comment", client.credential, body)
+  end
+
+  @doc """
+  Assign incidents to a user.
+  """
+  @spec assign(Client.t(), [String.t()], String.t()) :: {:ok, map()} | {:error, term()}
+  def assign(%Client{} = client, incident_ids, assignee) when is_list(incident_ids) do
+    body = create_request(%{version: @version, incident_ids: incident_ids, new_assignee: assignee})
+    SearchIncidentClient.post_json(req(client), "/assign_incident", client.credential, body)
+  end
+
+  @doc """
+  Resolve incidents.
+  """
+  @spec resolve(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
+  def resolve(%Client{} = client, incident_ids) when is_list(incident_ids) do
+    change_status(client, "/resolve_incident", incident_ids)
+  end
+
+  @doc """
+  Close incidents.
+  """
+  @spec close(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
+  def close(%Client{} = client, incident_ids) when is_list(incident_ids) do
+    change_status(client, "/close_incident", incident_ids)
+  end
+
+  @doc """
+  Reopen incidents.
+  """
+  @spec reopen(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
+  def reopen(%Client{} = client, incident_ids) when is_list(incident_ids) do
+    change_status(client, "/reopen_incident", incident_ids)
+  end
+
+  @doc """
+  Get users from the Logpoint instance.
+  """
+  @spec get_users(Client.t()) :: {:ok, map()} | {:error, term()}
+  def get_users(%Client{} = client) do
+    SearchIncidentClient.get(req(client), "/get_users", client.credential)
+  end
+
+  defp change_status(%Client{} = client, endpoint, incident_ids) do
+    body = create_request(%{version: @version, incident_ids: incident_ids})
+    SearchIncidentClient.post_json(req(client), endpoint, client.credential, body)
+  end
+
+  defp req(%Client{} = client) do
+    SearchIncidentClient.new(client.base_url, client.ssl_verify)
   end
 
   defp create_request(params) do

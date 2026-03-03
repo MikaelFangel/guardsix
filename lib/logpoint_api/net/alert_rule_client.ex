@@ -22,11 +22,23 @@ defmodule LogpointApi.Net.AlertRuleClient do
 
   def get(req, path, token, params \\ %{}) do
     req = Req.merge(req, auth: {:bearer, token})
-    Req.get(req, url: path, params: params)
+
+    decode_response(Req.get(req, url: path, params: params))
   end
 
   def post(req, path, token, body) do
     req = Req.merge(req, auth: {:bearer, token})
-    Req.post(req, url: path, json: body)
+
+    decode_response(Req.post(req, url: path, json: body))
   end
+
+  defp decode_response({:ok, %Req.Response{body: body}}) when is_binary(body) do
+    Jason.decode(body)
+  end
+
+  defp decode_response({:ok, %Req.Response{body: body}}) when is_map(body) do
+    {:ok, body}
+  end
+
+  defp decode_response({:error, _} = error), do: error
 end

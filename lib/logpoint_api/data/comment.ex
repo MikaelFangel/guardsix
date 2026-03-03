@@ -3,6 +3,11 @@ defmodule LogpointApi.Data.Comment do
   @enforce_keys :_id
   defstruct [:_id, comments: []]
 
+  @type t :: %__MODULE__{
+          _id: String.t(),
+          comments: [String.t()]
+        }
+
   def new(id, comments) when is_list(comments) do
     %__MODULE__{_id: id, comments: comments}
   end

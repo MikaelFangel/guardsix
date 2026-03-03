@@ -3,6 +3,13 @@ defmodule LogpointApi.Data.SearchParams do
   @derive Jason.Encoder
   defstruct [:query, :time_range, :limit, :repos]
 
+  @type t :: %__MODULE__{
+          query: String.t(),
+          time_range: String.t() | [number()],
+          limit: non_neg_integer(),
+          repos: [String.t()]
+        }
+
   def new(query, time_range, limit, repos) do
     %__MODULE__{
       query: query,

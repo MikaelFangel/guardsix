@@ -23,19 +23,20 @@ defmodule LogpointApi.Net.SearchIncidentClient do
 
   def get(req, path, credential, body \\ %{}) do
     body = body_with_credential(credential, body)
-    Req.get(req, url: path, json: body)
+
+    decode_response(Req.get(req, url: path, json: body))
   end
 
   def post(req, path, credential, body, content_type) when content_type in [:json, :form] do
     request_body = body_with_credential(credential, body)
 
-    case content_type do
-      :json ->
-        Req.post(req, url: path, json: request_body)
+    result =
+      case content_type do
+        :json -> Req.post(req, url: path, json: request_body)
+        :form -> Req.post(req, url: path, form: request_body)
+      end
 
-      :form ->
-        Req.post(req, url: path, form: request_body)
-    end
+    decode_response(result)
   end
 
   def post_json(req, path, credential, body) do
@@ -45,6 +46,16 @@ defmodule LogpointApi.Net.SearchIncidentClient do
   def post_form(req, path, credential, body) do
     post(req, path, credential, body, :form)
   end
+
+  defp decode_response({:ok, %Req.Response{body: body}}) when is_binary(body) do
+    Jason.decode(body)
+  end
+
+  defp decode_response({:ok, %Req.Response{body: body}}) when is_map(body) do
+    {:ok, body}
+  end
+
+  defp decode_response({:error, _} = error), do: error
 
   defp body_with_credential(%LogpointApi.Data.Credential{username: username, secret_key: secret}, body) do
     Map.merge(%{username: username, secret_key: secret}, body)

@@ -3,6 +3,11 @@ defmodule LogpointApi.Data.Credential do
   @enforce_keys [:username, :secret_key]
   defstruct [:username, :secret_key]
 
+  @type t :: %__MODULE__{
+          username: String.t(),
+          secret_key: String.t()
+        }
+
   def new(username, secret_key) do
     %__MODULE__{
       username: username,
