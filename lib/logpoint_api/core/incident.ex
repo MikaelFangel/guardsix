@@ -8,7 +8,7 @@ defmodule LogpointApi.Core.Incident do
     body = create_request(%{version: @version, ts_from: start_time, ts_to: end_time})
 
     if Keyword.get(opts, :state) do
-      SearchIncidentClient.get(req, "/incidents_states", credential, body)
+      SearchIncidentClient.get(req, "/incident_states", credential, body)
     else
       SearchIncidentClient.get(req, "/incidents", credential, body)
     end
