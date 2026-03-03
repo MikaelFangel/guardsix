@@ -27,7 +27,7 @@ client = LogpointApi.client("https://logpoint.company.com", "admin", "your_secre
 ```elixir
 alias LogpointApi.Core.Search
 
-query = LogpointApi.Data.SearchParams.new(
+query = LogpointApi.search_params(
   "user=*",
   "Last 24 hours",
   100,
@@ -59,7 +59,7 @@ alias LogpointApi.Core.Incident
 {:ok, incident} = Incident.get(client, "incident_obj_id", "incident_id")
 
 # Add comments
-comments = [LogpointApi.Data.Comment.new("incident_id_1", "This needs attention")]
+comments = [LogpointApi.comment("incident_id_1", "This needs attention")]
 {:ok, _} = Incident.add_comments(client, comments)
 
 # Assign and update states

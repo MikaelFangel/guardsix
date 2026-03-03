@@ -12,7 +12,7 @@ defmodule LogpointApi do
 
       alias LogpointApi.Core.Search
 
-      query = LogpointApi.Data.SearchParams.new("user=*", "Last 24 hours", 100, ["127.0.0.1"])
+      query = LogpointApi.search_params("user=*", "Last 24 hours", 100, ["127.0.0.1"])
 
       {:ok, %{"search_id" => id}} = Search.get_id(client, query)
       {:ok, result}               = Search.get_result(client, id)
@@ -29,7 +29,7 @@ defmodule LogpointApi do
       {:ok, _}         = Incident.close(client, ["id2"])
       {:ok, _}         = Incident.reopen(client, ["id3"])
       {:ok, _}         = Incident.assign(client, ["id1"], "user_id")
-      {:ok, _}         = Incident.add_comments(client, comments)
+      {:ok, _}         = Incident.add_comments(client, [LogpointApi.comment("id1", "note")])
       {:ok, users}     = Incident.get_users(client)
 
   ## Alert Rules
@@ -56,7 +56,9 @@ defmodule LogpointApi do
   """
 
   alias LogpointApi.Data.Client
+  alias LogpointApi.Data.Comment
   alias LogpointApi.Data.Credential
+  alias LogpointApi.Data.SearchParams
 
   @doc """
   Create a client for the Logpoint API.
@@ -70,5 +72,31 @@ defmodule LogpointApi do
   def client(base_url, username, secret_key, opts \\ []) do
     credential = Credential.new(username, secret_key)
     Client.new(base_url, credential, opts)
+  end
+
+  @doc """
+  Build a search query.
+  """
+  @spec search_params(String.t(), String.t() | [number()], non_neg_integer(), [String.t()]) ::
+          SearchParams.t()
+  def search_params(query, time_range, limit, repos) do
+    SearchParams.new(query, time_range, limit, repos)
+  end
+
+  @doc """
+  Build a search query with explicit start and end times.
+  """
+  @spec search_params(String.t(), number(), number(), non_neg_integer(), [String.t()]) ::
+          SearchParams.t()
+  def search_params(query, start_time, end_time, limit, repos) do
+    SearchParams.new(query, start_time, end_time, limit, repos)
+  end
+
+  @doc """
+  Build an incident comment.
+  """
+  @spec comment(String.t(), String.t() | [String.t()]) :: Comment.t()
+  def comment(incident_id, comments) do
+    Comment.new(incident_id, comments)
   end
 end
