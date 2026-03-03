@@ -35,7 +35,6 @@ defmodule LogpointApi do
   alias LogpointApi.Core.Search
   alias LogpointApi.Data.Credential
   alias LogpointApi.Data.SearchParams
-  alias LogpointApi.Net.SearchIncidentClient
 
   @typedoc """
   Configured Req client for the Logpoint instance

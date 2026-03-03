@@ -45,7 +45,7 @@ defmodule LogpointApi.Core.AlertRule do
     raise "not yet implemented"
   end
 
-  def list_all_lopoints_with_repos(req, token) do
+  def list_all_logpoints_with_repos(req, token) do
     AlertRuleClient.post(req, "/Repo/get_all_searchable_logpoint", token, %{})
   end
 
