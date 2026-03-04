@@ -1,5 +1,11 @@
 defmodule LogpointApi.Core.AlertRule do
-  @moduledoc false
+  @moduledoc """
+  Manage alert rules and their notifications in Logpoint.
+
+  Wraps the [Alert Rules API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/alert_rules_api).
+  Use the `Rule`, `EmailNotification`, and `HttpNotification` builders to compose
+  structs for creation endpoints.
+  """
 
   alias LogpointApi.Auth.JwtProvider
   alias LogpointApi.Data.Client

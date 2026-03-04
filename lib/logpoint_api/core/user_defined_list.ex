@@ -1,5 +1,9 @@
 defmodule LogpointApi.Core.UserDefinedList do
-  @moduledoc false
+  @moduledoc """
+  Manage user-defined lists in Logpoint.
+
+  Wraps the [User Defined Lists API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/user-defined-lists-api).
+  """
 
   alias LogpointApi.Auth.JwtProvider
   alias LogpointApi.Data.Client

@@ -1,5 +1,12 @@
 defmodule LogpointApi.Data.HttpNotification do
-  @moduledoc false
+  @moduledoc """
+  Builder for HTTP notification structs.
+
+  Wraps the [HTTP Notification for Alert Rules API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/http-notification-for-alert-rules).
+  Start with `LogpointApi.http_notification/3` and pipe through the builder
+  functions to configure the request and auth. Supports `no_auth/1`,
+  `api_token_auth/3`, `basic_auth/3`, and `bearer_auth/2`.
+  """
   @derive {Inspect, except: [:auth]}
   @enforce_keys [:ids, :http_url, :http_request_type]
   defstruct [

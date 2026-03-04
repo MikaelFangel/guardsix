@@ -1,5 +1,10 @@
 defmodule LogpointApi.Core.Incident do
-  @moduledoc false
+  @moduledoc """
+  Manage incidents in Logpoint.
+
+  Wraps the [Incident API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/incident-api)
+  for listing, assigning, commenting on, and changing the state of incidents.
+  """
 
   alias LogpointApi.Data.Client
   alias LogpointApi.Net.SearchIncidentClient

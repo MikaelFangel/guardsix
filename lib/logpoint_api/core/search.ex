@@ -1,5 +1,10 @@
 defmodule LogpointApi.Core.Search do
-  @moduledoc false
+  @moduledoc """
+  Search logs and retrieve instance data from Logpoint.
+
+  Wraps the [Search API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/search-api).
+  Use `LogpointApi.search_params/4` to build the query struct.
+  """
 
   alias LogpointApi.Data.Client
   alias LogpointApi.Data.SearchParams

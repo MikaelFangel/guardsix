@@ -1,5 +1,9 @@
 defmodule LogpointApi.Core.LogpointRepo do
-  @moduledoc false
+  @moduledoc """
+  List searchable logpoints and their repos.
+
+  Wraps the [Repos API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/repos_api).
+  """
 
   alias LogpointApi.Auth.JwtProvider
   alias LogpointApi.Data.Client

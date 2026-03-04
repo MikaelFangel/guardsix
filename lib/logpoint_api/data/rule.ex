@@ -1,5 +1,10 @@
 defmodule LogpointApi.Data.Rule do
-  @moduledoc false
+  @moduledoc """
+  Builder for alert rule structs.
+
+  Start with `LogpointApi.rule/1` and pipe through the builder functions
+  to set fields. Pass the result to `AlertRule.create/2`.
+  """
   @enforce_keys [:name]
   defstruct [
     :name,

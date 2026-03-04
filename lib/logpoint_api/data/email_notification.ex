@@ -1,5 +1,11 @@
 defmodule LogpointApi.Data.EmailNotification do
-  @moduledoc false
+  @moduledoc """
+  Builder for email notification structs.
+
+  Wraps the [Email Notification for Alert Rules API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/email-notification-for-alert-rules).
+  Start with `LogpointApi.email_notification/2` and pipe through the builder
+  functions to set subject, template, and other options.
+  """
   @enforce_keys [:ids, :email_emails]
   defstruct [
     :ids,
