@@ -87,6 +87,50 @@ alias LogpointApi.Core.AlertRule
 {:ok, notif} = AlertRule.get_notification(client, "rule-id", :email)
 ```
 
+#### Alert Rule Builder
+
+Build rules with a composable pipeline instead of raw maps:
+
+```elixir
+alias LogpointApi.Data.Rule
+
+rule =
+  LogpointApi.rule("Brute Force Detection")
+  |> Rule.description("Detects brute force login attempts")
+  |> Rule.query("error_code=4625")
+  |> Rule.time_range("Last 24 hours")
+  |> Rule.repos(["10.0.0.1"])
+  |> Rule.limit(100)
+  |> Rule.threshold(:above, 5)
+  |> Rule.risk_level("high")
+  |> Rule.mitre_tags(["T1110"])
+
+{:ok, _} = AlertRule.create(client, rule)
+```
+
+#### Notification Builders
+
+```elixir
+alias LogpointApi.Data.EmailNotification
+alias LogpointApi.Data.HttpNotification
+
+# Email notification
+notif =
+  LogpointApi.email_notification(["rule-1"], "admin@example.com")
+  |> EmailNotification.subject("Alert: {{ rule_name }}")
+  |> EmailNotification.template("<p>Details</p>")
+
+{:ok, _} = AlertRule.create_email_notification(client, notif)
+
+# HTTP notification
+webhook =
+  LogpointApi.http_notification(["rule-1"], "https://hooks.slack.com/abc", :post)
+  |> HttpNotification.body(~s({"text": "{{ rule_name }}"}))
+  |> HttpNotification.bearer_auth("my-token")
+
+{:ok, _} = AlertRule.create_http_notification(client, webhook)
+```
+
 ### Logpoint Repos and User-Defined Lists
 
 ```elixir

@@ -1,6 +1,7 @@
 defmodule LogpointApi.Data.Client do
   @moduledoc false
 
+  @derive {Inspect, except: [:credential]}
   @enforce_keys [:base_url, :credential]
   defstruct [:base_url, :credential, ssl_verify: true]
 

@@ -34,6 +34,7 @@ defmodule LogpointApi do
 
   ## Alert Rules
 
+      alias LogpointApi.Data.Rule
       alias LogpointApi.Core.AlertRule
 
       {:ok, rules} = AlertRule.list(client)
@@ -41,6 +42,41 @@ defmodule LogpointApi do
       {:ok, _}     = AlertRule.activate(client, ["id1", "id2"])
       {:ok, _}     = AlertRule.deactivate(client, ["id1"])
       {:ok, _}     = AlertRule.delete(client, ["id1"])
+
+      # Builder-style alert rule creation
+      rule =
+        LogpointApi.rule("Brute Force Detection")
+        |> Rule.description("Detects brute force login attempts")
+        |> Rule.query("error_code=4625")
+        |> Rule.time_range(1440)
+        |> Rule.repos(["10.0.0.1"])
+        |> Rule.limit(100)
+        |> Rule.threshold(:greaterthan, 5)
+        |> Rule.risk_level("high")
+        |> Rule.aggregation_type("max")
+        |> Rule.assignee("admin")
+
+      {:ok, _} = AlertRule.create(client, rule)
+
+      # Email notification
+      alias LogpointApi.Data.EmailNotification
+
+      notif =
+        LogpointApi.email_notification(["rule-1"], "admin@example.com")
+        |> EmailNotification.subject("Alert: {{ rule_name }}")
+        |> EmailNotification.template("<p>Details</p>")
+
+      {:ok, _} = AlertRule.create_email_notification(client, notif)
+
+      # HTTP notification
+      alias LogpointApi.Data.HttpNotification
+
+      webhook =
+        LogpointApi.http_notification(["rule-1"], "https://hooks.slack.com/abc", :post)
+        |> HttpNotification.body(~s({"text": "{{ rule_name }}"}))
+        |> HttpNotification.bearer_auth("my-token")
+
+      {:ok, _} = AlertRule.create_http_notification(client, webhook)
 
   ## Logpoint Repos & User-Defined Lists
 
@@ -58,6 +94,9 @@ defmodule LogpointApi do
   alias LogpointApi.Data.Client
   alias LogpointApi.Data.Comment
   alias LogpointApi.Data.Credential
+  alias LogpointApi.Data.EmailNotification
+  alias LogpointApi.Data.HttpNotification
+  alias LogpointApi.Data.Rule
   alias LogpointApi.Data.SearchParams
 
   @doc """
@@ -98,5 +137,29 @@ defmodule LogpointApi do
   @spec comment(String.t(), String.t() | [String.t()]) :: Comment.t()
   def comment(incident_id, comments) do
     Comment.new(incident_id, comments)
+  end
+
+  @doc """
+  Build an alert rule.
+  """
+  @spec rule(String.t()) :: Rule.t()
+  def rule(name) do
+    Rule.new(name)
+  end
+
+  @doc """
+  Build an email notification for alert rules.
+  """
+  @spec email_notification([String.t()], String.t() | [String.t()]) :: EmailNotification.t()
+  def email_notification(ids, emails) do
+    EmailNotification.new(ids, emails)
+  end
+
+  @doc """
+  Build an HTTP notification for alert rules.
+  """
+  @spec http_notification([String.t()], String.t(), atom()) :: HttpNotification.t()
+  def http_notification(ids, url, request_type) do
+    HttpNotification.new(ids, url, request_type)
   end
 end

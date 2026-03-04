@@ -1,5 +1,6 @@
 defmodule LogpointApi.Data.Credential do
   @moduledoc false
+  @derive {Inspect, except: [:secret_key]}
   @enforce_keys [:username, :secret_key]
   defstruct [:username, :secret_key]
 

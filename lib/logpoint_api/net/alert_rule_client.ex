@@ -32,6 +32,12 @@ defmodule LogpointApi.Net.AlertRuleClient do
     decode_response(Req.post(req, url: path, json: body))
   end
 
+  def post_form(req, path, token, body) do
+    req = Req.merge(req, auth: {:bearer, token})
+
+    decode_response(Req.post(req, url: path, form: body))
+  end
+
   defp decode_response({:ok, %Req.Response{body: body}}) when is_binary(body) do
     Jason.decode(body)
   end

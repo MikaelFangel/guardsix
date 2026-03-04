@@ -3,6 +3,9 @@ defmodule LogpointApi.Core.AlertRule do
 
   alias LogpointApi.Auth.JwtProvider
   alias LogpointApi.Data.Client
+  alias LogpointApi.Data.EmailNotification
+  alias LogpointApi.Data.HttpNotification
+  alias LogpointApi.Data.Rule
   alias LogpointApi.Net.AlertRuleClient
 
   @doc """
@@ -28,17 +31,33 @@ defmodule LogpointApi.Core.AlertRule do
   @doc """
   Create an alert rule.
   """
-  @spec create(Client.t(), map()) :: no_return()
-  def create(%Client{} = _client, _rule) do
-    raise "not yet implemented"
+  @spec create(Client.t(), Rule.t() | map()) :: {:ok, map()} | {:error, term()}
+  def create(%Client{} = client, %Rule{} = rule) do
+    with :ok <- Rule.validate(rule) do
+      create(client, Rule.to_map(rule))
+    end
+  end
+
+  def create(%Client{} = client, rule) when is_map(rule) do
+    with_write_token(client, fn token ->
+      AlertRuleClient.post(req(client), "/AlertRules/create_api", token, rule)
+    end)
   end
 
   @doc """
   Update an alert rule.
   """
-  @spec update(Client.t(), String.t(), map()) :: no_return()
-  def update(%Client{} = _client, _id, _rule) do
-    raise "not yet implemented"
+  @spec update(Client.t(), String.t(), Rule.t() | map()) :: {:ok, map()} | {:error, term()}
+  def update(%Client{} = client, id, %Rule{} = rule) when is_binary(id) do
+    with :ok <- Rule.validate(rule) do
+      update(client, id, Rule.to_map(rule))
+    end
+  end
+
+  def update(%Client{} = client, id, rule) when is_binary(id) and is_map(rule) do
+    with_write_token(client, fn token ->
+      AlertRuleClient.post(req(client), "/AlertRules/update_api", token, Map.put(rule, :id, id))
+    end)
   end
 
   @doc """
@@ -89,11 +108,75 @@ defmodule LogpointApi.Core.AlertRule do
   end
 
   @doc """
-  Update alert notifications.
+  Create an email notification for alert rules.
   """
-  @spec update_notifications(Client.t(), [String.t()], map()) :: no_return()
-  def update_notifications(%Client{} = _client, _ids, _notification) do
-    raise "not yet implemented"
+  @spec create_email_notification(Client.t(), EmailNotification.t()) ::
+          {:ok, map()} | {:error, term()}
+  def create_email_notification(%Client{} = client, %EmailNotification{} = notif) do
+    with :ok <- EmailNotification.validate(notif) do
+      body = Map.put(EmailNotification.to_map(notif), :type, "email")
+
+      with_write_token(client, fn token ->
+        AlertRuleClient.post_form(
+          req(client),
+          "/pluggables/Notification/EmailNotification/create_api",
+          token,
+          body
+        )
+      end)
+    end
+  end
+
+  @spec create_email_notification(Client.t(), [String.t()], map()) ::
+          {:ok, map()} | {:error, term()}
+  def create_email_notification(%Client{} = client, ids, params)
+      when is_list(ids) and is_map(params) do
+    body = Map.merge(params, %{ids: ids, type: "email"})
+
+    with_write_token(client, fn token ->
+      AlertRuleClient.post_form(
+        req(client),
+        "/pluggables/Notification/EmailNotification/create_api",
+        token,
+        body
+      )
+    end)
+  end
+
+  @doc """
+  Create an HTTP notification for alert rules.
+  """
+  @spec create_http_notification(Client.t(), HttpNotification.t()) ::
+          {:ok, map()} | {:error, term()}
+  def create_http_notification(%Client{} = client, %HttpNotification{} = notif) do
+    with :ok <- HttpNotification.validate(notif) do
+      body = Map.put(HttpNotification.to_map(notif), :type, "http")
+
+      with_write_token(client, fn token ->
+        AlertRuleClient.post(
+          req(client),
+          "/pluggables/Notification/HTTPNotification/create_api",
+          token,
+          body
+        )
+      end)
+    end
+  end
+
+  @spec create_http_notification(Client.t(), [String.t()], map()) ::
+          {:ok, map()} | {:error, term()}
+  def create_http_notification(%Client{} = client, ids, params)
+      when is_list(ids) and is_map(params) do
+    body = Map.merge(params, %{ids: ids, type: "http"})
+
+    with_write_token(client, fn token ->
+      AlertRuleClient.post(
+        req(client),
+        "/pluggables/Notification/HTTPNotification/create_api",
+        token,
+        body
+      )
+    end)
   end
 
   defp with_read_token(%Client{} = client, fun) do
