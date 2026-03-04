@@ -1,5 +1,9 @@
 defmodule LogpointApi.Data.Comment do
-  @moduledoc false
+  @moduledoc """
+  An incident comment linking a comment string to an incident ID.
+
+  Built via `LogpointApi.comment/2`.
+  """
   @enforce_keys :_id
   defstruct [:_id, comments: []]
 

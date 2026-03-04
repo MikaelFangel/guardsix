@@ -1,5 +1,9 @@
 defmodule LogpointApi.Data.Credential do
-  @moduledoc false
+  @moduledoc """
+  Username and secret key used to authenticate with the Logpoint API.
+
+  Created internally by `LogpointApi.client/3,4`.
+  """
   @derive {Inspect, except: [:secret_key]}
   @enforce_keys [:username, :secret_key]
   defstruct [:username, :secret_key]

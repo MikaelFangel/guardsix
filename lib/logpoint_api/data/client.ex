@@ -1,5 +1,9 @@
 defmodule LogpointApi.Data.Client do
-  @moduledoc false
+  @moduledoc """
+  Holds the base URL, credential, and SSL settings for API requests.
+
+  Built via `LogpointApi.client/3,4`.
+  """
 
   alias LogpointApi.Data.Credential
 

@@ -1,5 +1,9 @@
 defmodule LogpointApi.Data.SearchParams do
-  @moduledoc false
+  @moduledoc """
+  Search query parameters passed to `LogpointApi.Core.Search` functions.
+
+  Built via `LogpointApi.search_params/4,5`.
+  """
   @derive Jason.Encoder
   defstruct [:query, :time_range, :limit, :repos]
 
