@@ -4,6 +4,7 @@ defmodule LogpointApi.Data.Comment do
 
   Built via `LogpointApi.comment/2`.
   """
+  @derive Jason.Encoder
   @enforce_keys :_id
   defstruct [:_id, comments: []]
 
