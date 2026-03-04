@@ -37,6 +37,9 @@ defmodule LogpointApi.Core.Incident do
   risk, attack_category, attack_tag, log_source, or custom metadata fields.
   Multiple values for a single filter can be comma-separated.
 
+  Note: filter support for this endpoint is unverified and filters may be
+  ignored by the API.
+
   ## Examples
 
       Incident.list_states(client, start_time, end_time)
