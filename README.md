@@ -1,28 +1,32 @@
 # LogpointApi
 
-A clean, stateless Elixir library for interacting with the [Logpoint API](https://docs.logpoint.com/docs/logpoint-api-reference/en/latest/index.html).
-
-This library provides simple functions that make direct HTTP requests to the Logpoint API without any OTP overhead or persistent connections.
+A stateless implementation of the [Logpoint SIEM API Reference](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference).
+The library is a wrapper around the API reference with the addition of builder patterns for alert rules and notifications. I try
+to make sure the library stays as true to the API as possible with minor simplifications so it is easier to correlate the lib with
+the API reference doc.
 
 ## Installation
 
 ```elixir
 def deps do
   [
-    {:logpoint_api, "~> 1.0.0"}
+    {:logpoint_api, "~> 2.0.0"}
   ]
 end
 ```
 
 ## Basic Usage
 
-Create a client and pass it to any domain module:
+Create a universal client that can be used with all functions. This is a simplification over the split in the API design
+where some endpoints use JWT tokens and others don't. 
 
 ```elixir
 client = LogpointApi.client("https://logpoint.company.com", "admin", "your_secret_key")
 ```
 
 ### Search
+
+Search includes all functions from the [search API reference](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/search-api) and for writing search_param queries please refer to [Search Log Data](https://docs.logpoint.com/siem/product-docs/readme/a_work-with-your-log-data/search_your_log_data).
 
 ```elixir
 alias LogpointApi.Core.Search
@@ -41,12 +45,16 @@ query = LogpointApi.search_params(
 ### Instance Information
 
 ```elixir
+alias LogpointApi.Core.Search
+
 {:ok, user_prefs} = Search.user_preference(client)
 {:ok, repos}      = Search.logpoint_repos(client)
 {:ok, devices}    = Search.devices(client)
 ```
 
 ### Incident Management
+
+The incident module wraps the [Incident API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/incident-api).
 
 ```elixir
 alias LogpointApi.Core.Incident
@@ -55,7 +63,8 @@ alias LogpointApi.Core.Incident
 {:ok, incidents} = Incident.list(client, 1_714_986_600, 1_715_031_000)
 {:ok, states}    = Incident.list_states(client, 1_714_986_600, 1_715_031_000)
 
-# Get a specific incident
+# Get a specific incident where both the incident_obj_id and incident_id
+# is needed to get the unique incident.
 {:ok, incident} = Incident.get(client, "incident_obj_id", "incident_id")
 
 # Add comments
@@ -74,7 +83,9 @@ comments = [LogpointApi.comment("incident_id_1", "This needs attention")]
 
 ### Alert Rules
 
-Alert rules handle JWT token generation internally:
+AlertRule wraps the [Alert Rules API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/alert_rules_api).
+All parameters for alert rule creation are defined but please refer to the alert rule builder for a composable structure
+for building rules.
 
 ```elixir
 alias LogpointApi.Core.AlertRule
@@ -89,7 +100,7 @@ alias LogpointApi.Core.AlertRule
 
 #### Alert Rule Builder
 
-Build rules with a composable pipeline instead of raw maps:
+Compose alert rules to be used with the create alert rule endpoint.
 
 ```elixir
 alias LogpointApi.Data.Rule
@@ -98,10 +109,10 @@ rule =
   LogpointApi.rule("Brute Force Detection")
   |> Rule.description("Detects brute force login attempts")
   |> Rule.query("error_code=4625")
-  |> Rule.time_range("Last 24 hours")
+  |> Rule.time_range(1440)
   |> Rule.repos(["10.0.0.1"])
   |> Rule.limit(100)
-  |> Rule.threshold(:above, 5)
+  |> Rule.threshold(:greaterthan, 5)
   |> Rule.risk_level("high")
   |> Rule.mitre_tags(["T1110"])
 
@@ -109,6 +120,8 @@ rule =
 ```
 
 #### Notification Builders
+
+Compose notifications for alert rules.
 
 ```elixir
 alias LogpointApi.Data.EmailNotification
@@ -122,13 +135,18 @@ notif =
 
 {:ok, _} = AlertRule.create_email_notification(client, notif)
 
-# HTTP notification
+# HTTP notification with bearer auth
 webhook =
   LogpointApi.http_notification(["rule-1"], "https://hooks.slack.com/abc", :post)
   |> HttpNotification.body(~s({"text": "{{ rule_name }}"}))
   |> HttpNotification.bearer_auth("my-token")
 
 {:ok, _} = AlertRule.create_http_notification(client, webhook)
+
+# Other auth types: no_auth/1, api_token_auth/3, basic_auth/3
+webhook
+|> HttpNotification.api_token_auth("X-API-Key", "secret123")
+|> HttpNotification.basic_auth("user", "pass")
 ```
 
 ### Logpoint Repos and User-Defined Lists
