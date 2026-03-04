@@ -1,30 +1,14 @@
 defmodule LogpointApi.Net.SearchIncidentClient do
   @moduledoc false
 
-  def new(base_url, ssl_verify \\ true) do
-    base_options = [base_url: base_url]
+  alias LogpointApi.Net.BaseClient
 
-    options =
-      if ssl_verify do
-        base_options
-      else
-        base_options ++
-          [
-            connect_options: [
-              transport_opts: [
-                verify: :verify_none
-              ]
-            ]
-          ]
-      end
-
-    Req.new(options)
-  end
+  defdelegate new(base_url, ssl_verify \\ true), to: BaseClient
 
   def get(req, path, credential, body \\ %{}) do
     body = body_with_credential(credential, body)
 
-    decode_response(Req.get(req, url: path, json: body))
+    BaseClient.decode_response(Req.get(req, url: path, json: body))
   end
 
   def post(req, path, credential, body, content_type) when content_type in [:json, :form] do
@@ -36,7 +20,7 @@ defmodule LogpointApi.Net.SearchIncidentClient do
         :form -> Req.post(req, url: path, form: request_body)
       end
 
-    decode_response(result)
+    BaseClient.decode_response(result)
   end
 
   def post_json(req, path, credential, body) do
@@ -46,16 +30,6 @@ defmodule LogpointApi.Net.SearchIncidentClient do
   def post_form(req, path, credential, body) do
     post(req, path, credential, body, :form)
   end
-
-  defp decode_response({:ok, %Req.Response{body: body}}) when is_binary(body) do
-    Jason.decode(body)
-  end
-
-  defp decode_response({:ok, %Req.Response{body: body}}) when is_map(body) do
-    {:ok, body}
-  end
-
-  defp decode_response({:error, _} = error), do: error
 
   defp body_with_credential(%LogpointApi.Data.Credential{username: username, secret_key: secret}, body) do
     Map.merge(%{username: username, secret_key: secret}, body)
