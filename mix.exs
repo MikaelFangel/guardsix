@@ -61,7 +61,10 @@ defmodule LogpointApi.MixProject do
       main: "LogpointApi",
       source_url: @source_url,
       source_ref: "v#{@version}",
-      extras: ["README.md", "CONTRIBUTING.md"]
+      extras: ["README.md", "CONTRIBUTING.md", "guides/upgrading/v2.md"],
+      groups_for_extras: [
+        Upgrading: ~r/guides\/upgrading\/.*/
+      ]
     ]
   end
 end
