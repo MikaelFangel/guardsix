@@ -38,9 +38,9 @@ defmodule LogpointApi.MixProject do
 
   defp description do
     """
-    A clean, stateless Elixir library for interacting with the Logpoint API.
-    Provides functions for searching logs, managing incidents, and retrieving
-    instance data with configurable SSL verification for self-signed certificates.
+    A stateless Elixir wrapper for the Logpoint SIEM API.
+    Covers searching, incidents, alert rules, user-defined lists, and repos
+    with builder patterns for rules and notifications.
     """
   end
 
