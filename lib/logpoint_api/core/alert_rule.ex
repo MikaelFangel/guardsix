@@ -147,8 +147,7 @@ defmodule LogpointApi.Core.AlertRule do
 
   @spec create_email_notification(Client.t(), [String.t()], map()) ::
           {:ok, map()} | {:error, term()}
-  def create_email_notification(%Client{} = client, ids, params)
-      when is_list(ids) and is_map(params) do
+  def create_email_notification(%Client{} = client, ids, params) when is_list(ids) and is_map(params) do
     body = Map.merge(params, %{ids: ids, type: "email"})
 
     with_write_token(client, fn token ->
@@ -183,8 +182,7 @@ defmodule LogpointApi.Core.AlertRule do
 
   @spec create_http_notification(Client.t(), [String.t()], map()) ::
           {:ok, map()} | {:error, term()}
-  def create_http_notification(%Client{} = client, ids, params)
-      when is_list(ids) and is_map(params) do
+  def create_http_notification(%Client{} = client, ids, params) when is_list(ids) and is_map(params) do
     body = Map.merge(params, %{ids: ids, type: "http"})
 
     with_write_token(client, fn token ->

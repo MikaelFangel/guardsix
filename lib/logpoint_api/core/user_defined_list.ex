@@ -35,8 +35,7 @@ defmodule LogpointApi.Core.UserDefinedList do
   Import a static list from CSV or TXT content.
   """
   @spec import_static(Client.t(), String.t(), String.t()) :: {:ok, map()} | {:error, term()}
-  def import_static(%Client{} = client, name, content)
-      when is_binary(name) and is_binary(content) do
+  def import_static(%Client{} = client, name, content) when is_binary(name) and is_binary(content) do
     body = %{package_import_name: name, package_import: content}
 
     with_write_token(client, fn token ->

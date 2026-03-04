@@ -62,8 +62,17 @@ defmodule LogpointApi.Data.Rule do
           foureyes: boolean()
         }
 
-  @required_fields [:name, :query, :time_range, :repos, :threshold_option, :threshold_value,
-                     :risk_level, :aggregation_type, :assignee]
+  @required_fields [
+    :name,
+    :query,
+    :time_range,
+    :repos,
+    :threshold_option,
+    :threshold_value,
+    :risk_level,
+    :aggregation_type,
+    :assignee
+  ]
 
   @spec validate(t()) :: :ok | {:error, [String.t()]}
   def validate(%__MODULE__{} = rule) do
@@ -89,23 +98,18 @@ defmodule LogpointApi.Data.Rule do
   def description(%__MODULE__{} = rule, description), do: %{rule | description: description}
   def query(%__MODULE__{} = rule, query), do: %{rule | query: query}
 
-  def time_range(%__MODULE__{} = rule, minutes) when is_integer(minutes),
-    do: %{rule | time_range: minutes}
+  def time_range(%__MODULE__{} = rule, minutes) when is_integer(minutes), do: %{rule | time_range: minutes}
 
   def repos(%__MODULE__{} = rule, repos) when is_list(repos), do: %{rule | repos: repos}
   def limit(%__MODULE__{} = rule, limit) when is_integer(limit), do: %{rule | limit: limit}
 
-  def search_interval(%__MODULE__{} = rule, minutes) when is_integer(minutes),
-    do: %{rule | search_interval: minutes}
+  def search_interval(%__MODULE__{} = rule, minutes) when is_integer(minutes), do: %{rule | search_interval: minutes}
 
-  def delay_interval(%__MODULE__{} = rule, minutes) when is_integer(minutes),
-    do: %{rule | delay_interval: minutes}
+  def delay_interval(%__MODULE__{} = rule, minutes) when is_integer(minutes), do: %{rule | delay_interval: minutes}
 
-  def flush_on_trigger(%__MODULE__{} = rule, enabled) when is_boolean(enabled),
-    do: %{rule | flush_on_trigger: enabled}
+  def flush_on_trigger(%__MODULE__{} = rule, enabled) when is_boolean(enabled), do: %{rule | flush_on_trigger: enabled}
 
-  def throttling(%__MODULE__{} = rule, field, time_range)
-      when is_binary(field) and is_integer(time_range) do
+  def throttling(%__MODULE__{} = rule, field, time_range) when is_binary(field) and is_integer(time_range) do
     %{rule | throttling_enabled: true, throttling_field: field, throttling_time_range: time_range}
   end
 
@@ -119,25 +123,19 @@ defmodule LogpointApi.Data.Rule do
 
   def mitre_tags(%__MODULE__{} = rule, tags) when is_list(tags), do: %{rule | mitre_tags: tags}
 
-  def log_sources(%__MODULE__{} = rule, sources) when is_list(sources),
-    do: %{rule | log_sources: sources}
+  def log_sources(%__MODULE__{} = rule, sources) when is_list(sources), do: %{rule | log_sources: sources}
 
-  def metadata(%__MODULE__{} = rule, metadata) when is_map(metadata),
-    do: %{rule | metadata: metadata}
+  def metadata(%__MODULE__{} = rule, metadata) when is_map(metadata), do: %{rule | metadata: metadata}
 
   def assignee(%__MODULE__{} = rule, assignee), do: %{rule | assignee: assignee}
 
-  def user_groups(%__MODULE__{} = rule, groups) when is_list(groups),
-    do: %{rule | user_groups: groups}
+  def user_groups(%__MODULE__{} = rule, groups) when is_list(groups), do: %{rule | user_groups: groups}
 
-  def jinja_template(%__MODULE__{} = rule, template),
-    do: %{rule | jinja_template: template, apply_jinja_template: true}
+  def jinja_template(%__MODULE__{} = rule, template), do: %{rule | jinja_template: template, apply_jinja_template: true}
 
-  def simple_view(%__MODULE__{} = rule, enabled) when is_boolean(enabled),
-    do: %{rule | simple_view: enabled}
+  def simple_view(%__MODULE__{} = rule, enabled) when is_boolean(enabled), do: %{rule | simple_view: enabled}
 
-  def foureyes(%__MODULE__{} = rule, enabled) when is_boolean(enabled),
-    do: %{rule | foureyes: enabled}
+  def foureyes(%__MODULE__{} = rule, enabled) when is_boolean(enabled), do: %{rule | foureyes: enabled}
 
   @doc """
   Convert a `Rule` struct into the nested map format expected by the Logpoint API.

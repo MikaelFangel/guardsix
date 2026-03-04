@@ -122,5 +122,4 @@ defmodule LogpointApi.Data.HttpNotification do
     |> Enum.reject(fn {_k, v} -> is_nil(v) end)
     |> Map.new()
   end
-
 end

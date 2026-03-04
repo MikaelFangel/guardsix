@@ -72,8 +72,7 @@ defmodule LogpointApi.Data.EmailNotification do
   def notify_email(%__MODULE__{} = notif, enabled), do: %{notif | notify_email: enabled}
   def dispatch_option(%__MODULE__{} = notif, option), do: %{notif | dispatch_option: option}
 
-  def disable_search_link(%__MODULE__{} = notif, disabled),
-    do: %{notif | disable_search_link: disabled}
+  def disable_search_link(%__MODULE__{} = notif, disabled), do: %{notif | disable_search_link: disabled}
 
   def logo(%__MODULE__{} = notif, type, value) do
     %{notif | logo_enable: true, logo_type: type, logo_value: value}
