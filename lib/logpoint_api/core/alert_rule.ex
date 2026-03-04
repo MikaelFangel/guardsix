@@ -16,6 +16,18 @@ defmodule LogpointApi.Core.AlertRule do
 
   @doc """
   List alert rules.
+
+  Supported keys in `params`:
+
+    * `:limit` - maximum number of rules to return
+    * `:page` - page number for pagination
+    * `:return_all_data` - when `true`, returns all rule data
+
+  ## Examples
+
+      AlertRule.list(client)
+      AlertRule.list(client, %{limit: 10, page: 1})
+
   """
   @spec list(Client.t(), map()) :: {:ok, map()} | {:error, term()}
   def list(%Client{} = client, params \\ %{}) do

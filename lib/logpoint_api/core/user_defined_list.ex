@@ -11,6 +11,18 @@ defmodule LogpointApi.Core.UserDefinedList do
 
   @doc """
   List user defined lists.
+
+  Supported keys in `params`:
+
+    * `:limit` - maximum number of lists to return
+    * `:page` - page number for pagination
+    * `:return_all_data` - when `true`, returns all list data
+
+  ## Examples
+
+      UserDefinedList.list(client)
+      UserDefinedList.list(client, %{limit: 25, page: 2})
+
   """
   @spec list(Client.t(), map()) :: {:ok, map()} | {:error, term()}
   def list(%Client{} = client, params \\ %{}) do

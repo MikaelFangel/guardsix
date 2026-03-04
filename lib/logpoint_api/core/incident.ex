@@ -13,20 +13,40 @@ defmodule LogpointApi.Core.Incident do
 
   @doc """
   List incidents within a time range.
+
+  An optional `filters` map can be provided to filter by name, status, type,
+  risk, attack_category, attack_tag, log_source, or custom metadata fields.
+  Multiple values for a single filter can be comma-separated.
+
+  ## Examples
+
+      Incident.list(client, start_time, end_time)
+      Incident.list(client, start_time, end_time, %{status: "unresolved", risk: "critical"})
+
   """
-  @spec list(Client.t(), number(), number()) :: {:ok, map()} | {:error, term()}
-  def list(%Client{} = client, start_time, end_time) do
+  @spec list(Client.t(), number(), number(), map()) :: {:ok, map()} | {:error, term()}
+  def list(%Client{} = client, start_time, end_time, filters \\ %{}) do
     body = create_request(%{version: @version, ts_from: start_time, ts_to: end_time})
-    SearchIncidentClient.get(req(client), "/incidents", client.credential, body)
+    SearchIncidentClient.get(req(client), build_path("/incidents", filters), client.credential, body)
   end
 
   @doc """
   List incident states within a time range.
+
+  An optional `filters` map can be provided to filter by name, status, type,
+  risk, attack_category, attack_tag, log_source, or custom metadata fields.
+  Multiple values for a single filter can be comma-separated.
+
+  ## Examples
+
+      Incident.list_states(client, start_time, end_time)
+      Incident.list_states(client, start_time, end_time, %{status: "unresolved"})
+
   """
-  @spec list_states(Client.t(), number(), number()) :: {:ok, map()} | {:error, term()}
-  def list_states(%Client{} = client, start_time, end_time) do
+  @spec list_states(Client.t(), number(), number(), map()) :: {:ok, map()} | {:error, term()}
+  def list_states(%Client{} = client, start_time, end_time, filters \\ %{}) do
     body = create_request(%{version: @version, ts_from: start_time, ts_to: end_time})
-    SearchIncidentClient.get(req(client), "/incident_states", client.credential, body)
+    SearchIncidentClient.get(req(client), build_path("/incident_states", filters), client.credential, body)
   end
 
   @doc """
@@ -87,6 +107,9 @@ defmodule LogpointApi.Core.Incident do
   def get_users(%Client{} = client) do
     SearchIncidentClient.get(req(client), "/get_users", client.credential)
   end
+
+  defp build_path(base, filters) when map_size(filters) == 0, do: base
+  defp build_path(base, filters), do: base <> "?" <> URI.encode_query(filters)
 
   defp change_status(%Client{} = client, endpoint, incident_ids) do
     body = create_request(%{version: @version, incident_ids: incident_ids})
