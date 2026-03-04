@@ -61,7 +61,13 @@ defmodule LogpointApi.MixProject do
       main: "readme",
       source_url: @source_url,
       source_ref: "v#{@version}",
-      extras: ["README.md", "CONTRIBUTING.md", "LICENSE", "guides/howtos/polling-search-results.md", "guides/upgrading/v2.md"],
+      extras: [
+        "README.md",
+        "CONTRIBUTING.md",
+        "LICENSE",
+        "guides/howtos/polling-search-results.md",
+        "guides/upgrading/v2.md"
+      ],
       groups_for_extras: [
         "How-To": ~r/guides\/howtos\/.*/,
         Upgrading: ~r/guides\/upgrading\/.*/
