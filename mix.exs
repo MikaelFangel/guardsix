@@ -1,14 +1,14 @@
 defmodule LogpointApi.MixProject do
   use Mix.Project
 
-  @version "1.0.3"
+  @version "2.0.0"
   @source_url "https://github.com/MikaelFangel/logpoint_api"
 
   def project do
     [
       app: :logpoint_api,
       version: @version,
-      elixir: "~> 1.13",
+      elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
@@ -27,8 +27,9 @@ defmodule LogpointApi.MixProject do
 
   defp deps do
     [
-      {:httpoison, "~> 2.0"},
+      {:req, "~> 0.5.15"},
       {:jason, "~> 1.4"},
+      {:joken, "~> 2.6"},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:styler, "~> 1.2", only: [:dev, :test], runtime: false}
@@ -37,9 +38,9 @@ defmodule LogpointApi.MixProject do
 
   defp description do
     """
-    A clean, stateless Elixir library for interacting with the Logpoint API.
-    Provides functions for searching logs, managing incidents, and retrieving
-    instance data with configurable SSL verification for self-signed certificates.
+    A stateless Elixir wrapper for the Logpoint SIEM API.
+    Covers searching, incidents, alert rules, user-defined lists, and repos
+    with builder patterns for rules and notifications.
     """
   end
 
@@ -57,10 +58,20 @@ defmodule LogpointApi.MixProject do
 
   defp docs do
     [
-      main: "LogpointApi",
+      main: "readme",
       source_url: @source_url,
       source_ref: "v#{@version}",
-      extras: ["README.md", "CONTRIBUTING.md"]
+      extras: [
+        "README.md",
+        "CONTRIBUTING.md",
+        "LICENSE",
+        "guides/howtos/polling-search-results.md",
+        "guides/upgrading/v2.md"
+      ],
+      groups_for_extras: [
+        "How-To": ~r/guides\/howtos\/.*/,
+        Upgrading: ~r/guides\/upgrading\/.*/
+      ]
     ]
   end
 end

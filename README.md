@@ -1,130 +1,170 @@
 # LogpointApi
 
-A clean, stateless Elixir library for interacting with the [Logpoint API](https://docs.logpoint.com/docs/logpoint-api-reference/en/latest/index.html).
-
-This library provides simple functions that make direct HTTP requests to the Logpoint API without any OTP overhead or persistent connections.
+A stateless implementation of the [Logpoint SIEM API Reference](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference).
+The library is a wrapper around the API reference with the addition of builder patterns for alert rules and notifications. I try
+to make sure the library stays as true to the API as possible with minor simplifications so it is easier to correlate the lib with
+the API reference doc.
 
 ## Installation
 
 ```elixir
 def deps do
   [
-    {:logpoint_api, "~> 1.0.0"}
+    {:logpoint_api, "~> 2.0.0"}
   ]
 end
 ```
 
 ## Basic Usage
 
-All functions require credentials as the first parameter:
+Create a universal client that can be used with all functions. This is a simplification over the split in the API design
+where some endpoints use JWT tokens and others don't. 
 
 ```elixir
-# Define your credentials
-credentials = %{
-  ip: "127.0.0.1",
-  username: "admin",
-  secret_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-  verify_ssl: false  # optional, defaults to false for self-signed certs
-}
+client = LogpointApi.client("https://logpoint.company.com", "admin", "your_secret_key")
 ```
 
-### Complete Search (Recommended)
+### Search
 
-The easiest way to perform a search is using `run_search/2`, which handles the entire search lifecycle:
-
-```elixir
-# Create a query
-query = %LogpointApi.Query{
-  query: "user=*",
-  limit: 100,
-  repos: ["127.0.0.1:5504"],
-  time_range: [1_714_986_600, 1_715_031_000]
-}
-
-# Run the complete search (submit + poll for results)
-{:ok, results} = LogpointApi.run_search(credentials, query)
-```
-
-### Manual Search Control
-
-For more control over the search process:
+Search includes all functions from the [search API reference](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/search-api) and for writing search_param queries please refer to [Search Log Data](https://docs.logpoint.com/siem/product-docs/readme/a_work-with-your-log-data/search_your_log_data).
 
 ```elixir
-# Submit a search and get the search ID
-{:ok, %{"search_id" => search_id}} = LogpointApi.get_search_id(credentials, query)
+alias LogpointApi.Core.Search
 
-# Check the search result (may need to poll until final: true)
-{:ok, result} = LogpointApi.get_search_result(credentials, search_id)
+query = LogpointApi.search_params(
+  "user=*",
+  "Last 24 hours",
+  100,
+  ["127.0.0.1:5504"]
+)
+
+{:ok, %{"search_id" => search_id}} = Search.get_id(client, query)
+{:ok, result} = Search.get_result(client, search_id)
 ```
 
 ### Instance Information
 
 ```elixir
-# Get various types of data from your Logpoint instance
-{:ok, user_prefs} = LogpointApi.user_preference(credentials)
-{:ok, repos} = LogpointApi.logpoint_repos(credentials)
-{:ok, devices} = LogpointApi.devices(credentials)
-{:ok, users} = LogpointApi.users(credentials)
+alias LogpointApi.Core.Search
+
+{:ok, user_prefs} = Search.user_preference(client)
+{:ok, repos}      = Search.logpoint_repos(client)
+{:ok, devices}    = Search.devices(client)
 ```
 
 ### Incident Management
 
+The incident module wraps the [Incident API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/incident-api).
+
 ```elixir
-# Get incident information
-{:ok, incident} = LogpointApi.incident(credentials, "incident_obj_id", "incident_id")
+alias LogpointApi.Core.Incident
 
-# Get incidents within a time range
-{:ok, incidents} = LogpointApi.incidents(credentials, 1_714_986_600, 1_715_031_000)
+# List incidents within a time range
+{:ok, incidents} = Incident.list(client, 1_714_986_600, 1_715_031_000)
+{:ok, states}    = Incident.list_states(client, 1_714_986_600, 1_715_031_000)
 
-# Add comments to incidents
-comments = %{"incident_id_1" => ["This needs attention", "Escalating to team"]}
-{:ok, _result} = LogpointApi.add_comments(credentials, comments)
+# Get a specific incident where both the incident_obj_id and incident_id
+# is needed to get the unique incident.
+{:ok, incident} = Incident.get(client, "incident_obj_id", "incident_id")
 
-# Assign incidents to a user  
-{:ok, _result} = LogpointApi.assign_incidents(credentials, ["incident_id_1", "incident_id_2"], "user_id")
+# Add comments
+comments = [LogpointApi.comment("incident_id_1", "This needs attention")]
+{:ok, _} = Incident.add_comments(client, comments)
 
-# Update incident states
-{:ok, _result} = LogpointApi.resolve_incidents(credentials, ["incident_id_1"])
-{:ok, _result} = LogpointApi.close_incidents(credentials, ["incident_id_2"])
-{:ok, _result} = LogpointApi.reopen_incidents(credentials, ["incident_id_3"])
+# Assign and update states
+{:ok, _} = Incident.assign(client, ["incident_id_1"], "user_id")
+{:ok, _} = Incident.resolve(client, ["incident_id_1"])
+{:ok, _} = Incident.close(client, ["incident_id_2"])
+{:ok, _} = Incident.reopen(client, ["incident_id_3"])
+
+# Get users
+{:ok, users} = Incident.get_users(client)
 ```
 
-## Query Structure
+### Alert Rules
 
-Create queries using the `Log
-pointApi.Query` struct:
+AlertRule wraps the [Alert Rules API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/alert_rules_api).
+All parameters for alert rule creation are defined but please refer to the alert rule builder for a composable structure
+for building rules.
 
 ```elixir
-%LogpointApi.Query{
-  query: "your_search_query",           # String: The search query
-  limit: 1000,                          # Integer: Maximum number of results
-  repos: ["repo1", "repo2"],           # List: Repository names to search
-  time_range: [start_time, end_time]   # List: Unix timestamps [from, to]
-}
+alias LogpointApi.Core.AlertRule
+
+{:ok, rules} = AlertRule.list(client)
+{:ok, rule}  = AlertRule.get(client, "rule-id")
+{:ok, _}     = AlertRule.activate(client, ["id1", "id2"])
+{:ok, _}     = AlertRule.deactivate(client, ["id1"])
+{:ok, _}     = AlertRule.delete(client, ["id1"])
+{:ok, notif} = AlertRule.get_notification(client, "rule-id", :email)
+```
+
+#### Alert Rule Builder
+
+Compose alert rules to be used with the create alert rule endpoint.
+
+```elixir
+alias LogpointApi.Data.Rule
+
+rule =
+  LogpointApi.rule("Brute Force Detection")
+  |> Rule.description("Detects brute force login attempts")
+  |> Rule.query("error_code=4625")
+  |> Rule.time_range(1440)
+  |> Rule.repos(["10.0.0.1"])
+  |> Rule.limit(100)
+  |> Rule.threshold(:greaterthan, 5)
+  |> Rule.risk_level("high")
+  |> Rule.mitre_tags(["T1110"])
+
+{:ok, _} = AlertRule.create(client, rule)
+```
+
+#### Notification Builders
+
+Compose notifications for alert rules.
+
+```elixir
+alias LogpointApi.Data.EmailNotification
+alias LogpointApi.Data.HttpNotification
+
+# Email notification
+notif =
+  LogpointApi.email_notification(["rule-1"], "admin@example.com")
+  |> EmailNotification.subject("Alert: {{ rule_name }}")
+  |> EmailNotification.template("<p>Details</p>")
+
+{:ok, _} = AlertRule.create_email_notification(client, notif)
+
+# HTTP notification with bearer auth
+webhook =
+  LogpointApi.http_notification(["rule-1"], "https://hooks.slack.com/abc", :post)
+  |> HttpNotification.body(~s({"text": "{{ rule_name }}"}))
+  |> HttpNotification.bearer_auth("my-token")
+
+{:ok, _} = AlertRule.create_http_notification(client, webhook)
+
+# Other auth types: no_auth/1, api_token_auth/3, basic_auth/3
+webhook
+|> HttpNotification.api_token_auth("X-API-Key", "secret123")
+|> HttpNotification.basic_auth("user", "pass")
+```
+
+### Logpoint Repos and User-Defined Lists
+
+```elixir
+alias LogpointApi.Core.LogpointRepo
+alias LogpointApi.Core.UserDefinedList
+
+{:ok, repos} = LogpointRepo.list(client)
+{:ok, lists} = UserDefinedList.list(client)
 ```
 
 ## SSL Configuration
 
-For servers with self-signed certificates:
+Pass `ssl_verify: false` to disable SSL verification (e.g. for self-signed certificates):
 
 ```elixir
-credentials = %{
-  ip: "192.168.1.100",
-  username: "admin", 
-  secret_key: "secret123",
-  verify_ssl: false  # Disables SSL certificate verification
-}
-```
-
-For production servers with valid certificates:
-
-```elixir
-credentials = %{
-  ip: "logpoint.company.com",
-  username: "admin",
-  secret_key: "secret123",
-  verify_ssl: true  # Enables SSL certificate verification
-}
+client = LogpointApi.client("https://192.168.1.100", "admin", "your_secret_key", ssl_verify: false)
 ```
 
 ## Error Handling
@@ -132,68 +172,14 @@ credentials = %{
 All functions return `{:ok, result}` or `{:error, reason}` tuples:
 
 ```elixir
-case LogpointApi.run_search(credentials, query) do
-  {:ok, results} ->
-    IO.puts("Found #{length(results["rows"])} results")
-    
+alias LogpointApi.Core.Search
+
+case Search.get_id(client, query) do
+  {:ok, %{"search_id" => search_id}} ->
+    IO.puts("Search started: #{search_id}")
+
   {:error, reason} ->
-    IO.puts("Search failed: #{reason}")
-end
-```
-
-## Advanced Options
-
-The `run_search/3` function accepts options for polling behavior:
-
-```elixir
-options = [
-  poll_interval: 2000,  # Poll every 2 seconds (default: 1000ms)
-  max_retries: 30       # Maximum polling attempts (default: 60)
-]
-
-{:ok, results} = LogpointApi.run_search(credentials, query, options)
-```
-
-## Examples
-
-### Complete Workflow Example
-
-```elixir
-# Setup
-credentials = %{
-  ip: "logpoint.company.com",
-  username: "admin",
-  secret_key: "your_secret_key",
-  verify_ssl: false
-}
-
-# Search for failed logins in the last hour
-query = %LogpointApi.Query{
-  query: "event_type=failed_login",
-  limit: 500,
-  repos: ["main_repo"],
-  time_range: [System.system_time(:second) - 3600, System.system_time(:second)]
-}
-
-# Run search and handle results
-case LogpointApi.run_search(credentials, query) do
-  {:ok, %{"rows" => events}} ->
-    IO.puts("Found #{length(events)} failed login attempts")
-    
-    # Get incident information
-    {:ok, incidents} = LogpointApi.incidents(credentials, 
-                                           System.system_time(:second) - 3600, 
-                                           System.system_time(:second))
-    
-    # Add comments to relevant incidents
-    if length(incidents["incidents"]) > 0 do
-      incident_id = hd(incidents["incidents"])["_id"]
-      comments = %{incident_id => ["Investigating failed logins from search"]}
-      LogpointApi.add_comments(credentials, comments)
-    end
-    
-  {:error, reason} ->
-    IO.puts("Search failed: #{reason}")
+    IO.puts("Search failed: #{inspect(reason)}")
 end
 ```
 

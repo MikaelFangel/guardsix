@@ -2,215 +2,164 @@ defmodule LogpointApi do
   @moduledoc """
   Elixir library for interacting with the Logpoint API.
 
-  This library provides a simple, stateless interface to the Logpoint API.
-  All functions take credentials as parameters and make direct HTTP requests.
+  Build a client, then pass it to any domain module.
 
-  ## Example Usage
+  ## Setup
 
-  ```elixir
-  # Define credentials
-  credentials = %{
-    ip: "127.0.0.1",
-    username: "admin",
-    secret_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-    verify_ssl: false  # optional, defaults to false for self-signed certs
-  }
+      client = LogpointApi.client("https://logpoint.company.com", "admin", "secret")
 
-  # Create a query
-  query = %LogpointApi.Query{
-    query: "user=*",
-    limit: 100,
-    repos: ["127.0.0.1:5504"],
-    time_range: [1_714_986_600, 1_715_031_000]
-  }
+  ## Search
 
-  # Run a complete search (get search_id + poll for results)
-  {:ok, result} = LogpointApi.run_search(credentials, query)
+      alias LogpointApi.Core.Search
 
-  # Or do it step by step
-  {:ok, %{"search_id" => search_id}} = LogpointApi.get_search_id(credentials, query)
-  {:ok, result} = LogpointApi.get_search_result(credentials, search_id)
-  ```
+      query = LogpointApi.search_params("user=*", "Last 24 hours", 100, ["127.0.0.1"])
+
+      {:ok, %{"search_id" => id}} = Search.get_id(client, query)
+      {:ok, result}               = Search.get_result(client, id)
+      {:ok, prefs}                = Search.user_preference(client)
+      {:ok, repos}                = Search.logpoint_repos(client)
+
+  ## Incidents
+
+      alias LogpointApi.Core.Incident
+
+      {:ok, incidents} = Incident.list(client, start_time, end_time)
+      {:ok, states}    = Incident.list_states(client, start_time, end_time)
+      {:ok, _}         = Incident.resolve(client, ["id1"])
+      {:ok, _}         = Incident.close(client, ["id2"])
+      {:ok, _}         = Incident.reopen(client, ["id3"])
+      {:ok, _}         = Incident.assign(client, ["id1"], "user_id")
+      {:ok, _}         = Incident.add_comments(client, [LogpointApi.comment("id1", "note")])
+      {:ok, users}     = Incident.get_users(client)
+
+  ## Alert Rules
+
+      alias LogpointApi.Data.Rule
+      alias LogpointApi.Core.AlertRule
+
+      {:ok, rules} = AlertRule.list(client)
+      {:ok, rule}  = AlertRule.get(client, "rule-id")
+      {:ok, _}     = AlertRule.activate(client, ["id1", "id2"])
+      {:ok, _}     = AlertRule.deactivate(client, ["id1"])
+      {:ok, _}     = AlertRule.delete(client, ["id1"])
+
+      # Builder-style alert rule creation
+      rule =
+        LogpointApi.rule("Brute Force Detection")
+        |> Rule.description("Detects brute force login attempts")
+        |> Rule.query("error_code=4625")
+        |> Rule.time_range(1440)
+        |> Rule.repos(["10.0.0.1"])
+        |> Rule.limit(100)
+        |> Rule.threshold(:greaterthan, 5)
+        |> Rule.risk_level("high")
+        |> Rule.aggregation_type("max")
+        |> Rule.assignee("admin")
+
+      {:ok, _} = AlertRule.create(client, rule)
+
+      # Email notification
+      alias LogpointApi.Data.EmailNotification
+
+      notif =
+        LogpointApi.email_notification(["rule-1"], "admin@example.com")
+        |> EmailNotification.subject("Alert: {{ rule_name }}")
+        |> EmailNotification.template("<p>Details</p>")
+
+      {:ok, _} = AlertRule.create_email_notification(client, notif)
+
+      # HTTP notification
+      alias LogpointApi.Data.HttpNotification
+
+      webhook =
+        LogpointApi.http_notification(["rule-1"], "https://hooks.slack.com/abc", :post)
+        |> HttpNotification.body(~s({"text": "{{ rule_name }}"}))
+        |> HttpNotification.bearer_auth("my-token")
+
+      {:ok, _} = AlertRule.create_http_notification(client, webhook)
+
+  ## Logpoint Repos & User-Defined Lists
+
+      alias LogpointApi.Core.LogpointRepo
+      alias LogpointApi.Core.UserDefinedList
+
+      {:ok, repos} = LogpointRepo.list(client)
+      {:ok, lists} = UserDefinedList.list(client)
+
+  ## SSL
+
+      client = LogpointApi.client("https://192.168.1.100", "admin", "secret", ssl_verify: false)
   """
 
-  alias LogpointApi.Core
-  alias LogpointApi.Incident
-  alias LogpointApi.IncidentComment
-  alias LogpointApi.IncidentCommentData
-  alias LogpointApi.IncidentIDs
-  alias LogpointApi.Query
-  alias LogpointApi.TimeRange
-
-  @typedoc """
-  Credentials for authenticating with the Logpoint API.
-  """
-  @type credentials :: %{
-          ip: String.t(),
-          username: String.t(),
-          secret_key: String.t(),
-          verify_ssl: boolean()
-        }
+  alias LogpointApi.Data.Client
+  alias LogpointApi.Data.Comment
+  alias LogpointApi.Data.Credential
+  alias LogpointApi.Data.EmailNotification
+  alias LogpointApi.Data.HttpNotification
+  alias LogpointApi.Data.Rule
+  alias LogpointApi.Data.SearchParams
 
   @doc """
-  Run a complete search: submit query, poll for completion, and return results.
+  Create a client for the Logpoint API.
 
-  This is a convenience function that combines `get_search_id/2` and `get_search_result/2`
-  with automatic polling until the search completes.
+  ## Options
+
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
   """
-  @spec run_search(credentials(), Query.t(), keyword()) :: {:ok, map()} | {:error, String.t()}
-  def run_search(credentials, %Query{} = query, opts \\ []) do
-    poll_interval = Keyword.get(opts, :poll_interval, 1000)
-    max_retries = Keyword.get(opts, :max_retries, 60)
-
-    with {:ok, %{"search_id" => search_id}} <- get_search_id(credentials, query) do
-      Core.poll_search_result(credentials, search_id, poll_interval, max_retries, query)
-    end
+  @spec client(String.t(), String.t(), String.t(), keyword()) :: Client.t()
+  def client(base_url, username, secret_key, opts \\ []) do
+    credential = Credential.new(username, secret_key)
+    Client.new(base_url, credential, opts)
   end
 
   @doc """
-  Create a search and get its search id.
+  Build a search query.
   """
-  @spec get_search_id(credentials(), Query.t()) :: {:ok, map()} | {:error, String.t()}
-  def get_search_id(credentials, %Query{} = query), do: Core.get_search_logs(credentials, query)
-
-  @doc """
-  Retrieve the search result of a specific search id.
-  """
-  @spec get_search_result(credentials(), String.t()) :: {:ok, map()} | {:error, String.t()}
-  def get_search_result(credentials, search_id), do: Core.get_search_logs(credentials, %{search_id: search_id})
-
-  @doc """
-  Get user preferences from the Logpoint instance.
-  """
-  @spec user_preference(credentials()) :: {:ok, map()} | {:error, String.t()}
-  def user_preference(credentials), do: Core.get_allowed_data(credentials, :user_preference)
-
-  @doc """
-  Get loginspects from the Logpoint instance.
-  """
-  @spec loginspects(credentials()) :: {:ok, map()} | {:error, String.t()}
-  def loginspects(credentials), do: Core.get_allowed_data(credentials, :loginspects)
-
-  @doc """
-  Get logpoint repositories from the instance.
-  """
-  @spec logpoint_repos(credentials()) :: {:ok, map()} | {:error, String.t()}
-  def logpoint_repos(credentials), do: Core.get_allowed_data(credentials, :logpoint_repos)
-
-  @doc """
-  Get devices from the Logpoint instance.
-  """
-  @spec devices(credentials()) :: {:ok, map()} | {:error, String.t()}
-  def devices(credentials), do: Core.get_allowed_data(credentials, :devices)
-
-  @doc """
-  Get live searches from the Logpoint instance.
-  """
-  @spec livesearches(credentials()) :: {:ok, map()} | {:error, String.t()}
-  def livesearches(credentials), do: Core.get_allowed_data(credentials, :livesearches)
-
-  @doc """
-  Get users from the Logpoint instance.
-  """
-  @spec users(credentials()) :: {:ok, map()} | {:error, String.t()}
-  def users(credentials), do: Core.get_users(credentials)
-
-  @doc """
-  Get a specific incident and its related data.
-  """
-  @spec get_data_from_incident(credentials(), Incident.t()) :: {:ok, map()} | {:error, String.t()}
-  def get_data_from_incident(credentials, %Incident{} = incident) do
-    Core.get_incident_info(credentials, incident)
+  @spec search_params(String.t(), String.t() | [number()], non_neg_integer(), [String.t()]) ::
+          SearchParams.t()
+  def search_params(query, time_range, limit, repos) do
+    SearchParams.new(query, time_range, limit, repos)
   end
 
   @doc """
-  Get incident information by object ID and incident ID.
+  Build a search query with explicit start and end times.
   """
-  @spec incident(credentials(), String.t(), String.t()) :: {:ok, map()} | {:error, String.t()}
-  def incident(credentials, incident_obj_id, incident_id) do
-    incident = Incident.new(incident_obj_id, incident_id)
-    Core.get_incident_info(credentials, incident)
+  @spec search_params(String.t(), number(), number(), non_neg_integer(), [String.t()]) ::
+          SearchParams.t()
+  def search_params(query, start_time, end_time, limit, repos) do
+    SearchParams.new(query, start_time, end_time, limit, repos)
   end
 
   @doc """
-  Get incidents within a time range.
+  Build an incident comment.
   """
-  @spec incidents(credentials(), number(), number()) :: {:ok, map()} | {:error, String.t()}
-  def incidents(credentials, start_time, end_time) do
-    time_range = TimeRange.new(start_time, end_time)
-    Core.get_incident_info(credentials, :incidents, time_range)
+  @spec comment(String.t(), String.t() | [String.t()]) :: Comment.t()
+  def comment(incident_id, comments) do
+    Comment.new(incident_id, comments)
   end
 
   @doc """
-  Get incident states within a time range.
+  Build an alert rule.
   """
-  @spec incident_states(credentials(), number(), number()) :: {:ok, map()} | {:error, String.t()}
-  def incident_states(credentials, start_time, end_time) do
-    time_range = TimeRange.new(start_time, end_time)
-    Core.get_incident_info(credentials, :incident_states, time_range)
+  @spec rule(String.t()) :: Rule.t()
+  def rule(name) do
+    Rule.new(name)
   end
 
   @doc """
-  Add comments to incidents.
-
-  Accepts either a map of %{"incident_id" => ["comment1", "comment2"]}
-  or an IncidentCommentData struct.
+  Build an email notification for alert rules.
   """
-  @spec add_comments(credentials(), map() | IncidentCommentData.t()) :: {:ok, map()} | {:error, String.t()}
-  def add_comments(credentials, %IncidentCommentData{} = incident_comment_data),
-    do: Core.update_incident_state(credentials, "/add_incident_comment", incident_comment_data)
-
-  def add_comments(credentials, comments) when is_map(comments) and not is_struct(comments) do
-    comment_structs =
-      Enum.map(comments, fn {incident_id, comment_list} ->
-        IncidentComment.new(incident_id, comment_list)
-      end)
-
-    comment_data = IncidentCommentData.new("0.1", comment_structs)
-    add_comments(credentials, comment_data)
+  @spec email_notification([String.t()], String.t() | [String.t()]) :: EmailNotification.t()
+  def email_notification(ids, emails) do
+    EmailNotification.new(ids, emails)
   end
 
   @doc """
-  Assign incidents to a user.
-
-  Accepts either a list of incident IDs or an IncidentIDs struct.
+  Build an HTTP notification for alert rules.
   """
-  @spec assign_incidents(credentials(), [String.t()] | IncidentIDs.t(), String.t()) ::
-          {:ok, map()} | {:error, String.t()}
-  def assign_incidents(credentials, %IncidentIDs{} = incident_ids, assignee_id) do
-    payload = Map.put(incident_ids, :new_assignee, assignee_id)
-    Core.update_incident_state(credentials, "/assign_incident", payload)
-  end
-
-  def assign_incidents(credentials, incident_ids, assignee_id) when is_list(incident_ids) do
-    incident_ids_struct = IncidentIDs.new("0.1", incident_ids)
-    assign_incidents(credentials, incident_ids_struct, assignee_id)
-  end
-
-  @doc """
-  Resolve incidents.
-  """
-  @spec resolve_incidents(credentials(), [String.t()]) :: {:ok, map()} | {:error, String.t()}
-  def resolve_incidents(credentials, incident_ids) do
-    incident_ids_struct = IncidentIDs.new("0.1", incident_ids)
-    Core.update_incidents(credentials, :resolve, incident_ids_struct)
-  end
-
-  @doc """
-  Close incidents.
-  """
-  @spec close_incidents(credentials(), [String.t()]) :: {:ok, map()} | {:error, String.t()}
-  def close_incidents(credentials, incident_ids) do
-    incident_ids_struct = IncidentIDs.new("0.1", incident_ids)
-    Core.update_incidents(credentials, :close, incident_ids_struct)
-  end
-
-  @doc """
-  Reopen incidents.
-  """
-  @spec reopen_incidents(credentials(), [String.t()]) :: {:ok, map()} | {:error, String.t()}
-  def reopen_incidents(credentials, incident_ids) do
-    incident_ids_struct = IncidentIDs.new("0.1", incident_ids)
-    Core.update_incidents(credentials, :reopen, incident_ids_struct)
+  @spec http_notification([String.t()], String.t(), atom()) :: HttpNotification.t()
+  def http_notification(ids, url, request_type) do
+    HttpNotification.new(ids, url, request_type)
   end
 end
