@@ -1,0 +1,49 @@
+name: Static Code Analysis
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze code
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.17"
+          otp-version: "27"
+      - name: Restore dependencies cache
+        uses: actions/cache@v5
+        id: cache-deps
+        with:
+          path: |
+            deps
+            _build
+          key: dev-${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: dev-${{ runner.os }}-mix-
+      - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: mix deps.get
+      - name: Compile with warnings as errors
+        run: mix compile --warnings-as-errors
+      - name: Check for unused dependencies
+        run: mix deps.unlock --check-unused
+      - name: Check code formatting
+        run: mix format --check-formatted
+      - name: Credo
+        run: mix credo
+      - name: Hex audit
+        run: mix hex.audit
