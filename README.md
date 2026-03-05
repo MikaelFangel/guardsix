@@ -109,7 +109,7 @@ rule =
   LogpointApi.rule("Brute Force Detection")
   |> Rule.description("Detects brute force login attempts")
   |> Rule.query("error_code=4625")
-  |> Rule.time_range(1440)
+  |> Rule.time_range(1, :day)
   |> Rule.repos(["10.0.0.1"])
   |> Rule.limit(100)
   |> Rule.threshold(:greaterthan, 5)
