@@ -10,7 +10,9 @@ defmodule LogpointApi.Data.Rule do
     :name,
     :description,
     :query,
-    :time_range,
+    :time_range_day,
+    :time_range_hour,
+    :time_range_minute,
     :repos,
     :limit,
     :search_interval,
@@ -38,7 +40,9 @@ defmodule LogpointApi.Data.Rule do
           name: String.t(),
           description: String.t() | nil,
           query: String.t() | nil,
-          time_range: non_neg_integer() | nil,
+          time_range_day: non_neg_integer() | nil,
+          time_range_hour: non_neg_integer() | nil,
+          time_range_minute: non_neg_integer() | nil,
           repos: [String.t()] | nil,
           limit: non_neg_integer() | nil,
           search_interval: non_neg_integer() | nil,
@@ -65,7 +69,6 @@ defmodule LogpointApi.Data.Rule do
   @required_fields [
     :name,
     :query,
-    :time_range,
     :repos,
     :threshold_option,
     :threshold_value,
@@ -76,12 +79,19 @@ defmodule LogpointApi.Data.Rule do
 
   @spec validate(t()) :: :ok | {:error, [String.t()]}
   def validate(%__MODULE__{} = rule) do
-    errors =
+    field_errors =
       for field <- @required_fields,
           blank?(Map.get(rule, field)),
           do: "#{field} is required"
 
-    case errors do
+    time_range_errors =
+      if blank?(rule.time_range_day) and blank?(rule.time_range_hour) and blank?(rule.time_range_minute) do
+        ["at least one of time_range_day, time_range_hour, or time_range_minute is required"]
+      else
+        []
+      end
+
+    case field_errors ++ time_range_errors do
       [] -> :ok
       errors -> {:error, errors}
     end
@@ -98,7 +108,22 @@ defmodule LogpointApi.Data.Rule do
   def description(%__MODULE__{} = rule, description), do: %{rule | description: description}
   def query(%__MODULE__{} = rule, query), do: %{rule | query: query}
 
-  def time_range(%__MODULE__{} = rule, minutes) when is_integer(minutes), do: %{rule | time_range: minutes}
+  def time_range(rule, value, unit \\ :minute)
+
+  def time_range(%__MODULE__{} = rule, value, :day) when is_integer(value) and value in 1..30,
+    do: %{rule | time_range_day: value, time_range_hour: nil, time_range_minute: nil}
+
+  def time_range(%__MODULE__{} = rule, value, :hour) when is_integer(value) and value > 720,
+    do: time_range(rule, div(value, 24), :day)
+
+  def time_range(%__MODULE__{} = rule, value, :hour) when is_integer(value) and value in 1..720,
+    do: %{rule | time_range_hour: value, time_range_day: nil, time_range_minute: nil}
+
+  def time_range(%__MODULE__{} = rule, value, :minute) when is_integer(value) and value >= 60,
+    do: time_range(rule, div(value, 60), :hour)
+
+  def time_range(%__MODULE__{} = rule, value, :minute) when is_integer(value) and value in 1..59,
+    do: %{rule | time_range_minute: value, time_range_day: nil, time_range_hour: nil}
 
   def repos(%__MODULE__{} = rule, repos) when is_list(repos), do: %{rule | repos: repos}
   def limit(%__MODULE__{} = rule, limit) when is_integer(limit), do: %{rule | limit: limit}
@@ -172,19 +197,23 @@ defmodule LogpointApi.Data.Rule do
   end
 
   defp build_search_params(rule) do
-    %{
+    reject_nil(%{
       query: rule.query,
-      timerange_minute: rule.time_range,
       repos: rule.repos,
       limit: rule.limit || 100,
       flush_on_trigger: rule.flush_on_trigger,
-      search_interval_minute: rule.search_interval || rule.time_range,
+      search_interval_minute: rule.search_interval,
       delay_interval_minute: rule.delay_interval || 0,
       throttling_enabled: rule.throttling_enabled,
       throttling_field: rule.throttling_field || "",
-      throttling_time_range: rule.throttling_time_range || 0
-    }
+      throttling_time_range: rule.throttling_time_range || 0,
+      timerange_day: rule.time_range_day,
+      timerange_hour: rule.time_range_hour,
+      timerange_minute: rule.time_range_minute
+    })
   end
+
+  defp reject_nil(map), do: Map.reject(map, fn {_, v} -> is_nil(v) end)
 
   defp build_metadata(meta) when map_size(meta) == 0, do: []
 
