@@ -1,7 +1,7 @@
 defmodule LogpointApi.MixProject do
   use Mix.Project
 
-  @version "2.0.1"
+  @version "2.1.0"
   @source_url "https://github.com/MikaelFangel/logpoint_api"
 
   def project do
@@ -52,7 +52,8 @@ defmodule LogpointApi.MixProject do
         "GitHub" => @source_url,
         "Documentation" => "https://hexdocs.pm/logpoint_api"
       },
-      maintainers: ["Mikael Fangel"]
+      maintainers: ["Mikael Fangel"],
+      files: ~w(lib mix.exs README.md LICENSE CONTRIBUTING.md usage-rules.md)
     ]
   end
 
