@@ -10,9 +10,13 @@ defmodule LogpointApi do
 
   ## Search
 
-      alias LogpointApi.Core.Search
-
       query = LogpointApi.search_params("user=*", "Last 24 hours", 100, ["127.0.0.1"])
+
+      # Block until final results (polls automatically)
+      {:ok, result} = LogpointApi.run_search(client, query)
+
+      # Low-level primitives are still available
+      alias LogpointApi.Core.Search
 
       {:ok, %{"search_id" => id}} = Search.get_id(client, query)
       {:ok, result}               = Search.get_result(client, id)
@@ -91,6 +95,7 @@ defmodule LogpointApi do
       client = LogpointApi.client("https://192.168.1.100", "admin", "secret", ssl_verify: false)
   """
 
+  alias LogpointApi.Core.SearchRunner
   alias LogpointApi.Data.Client
   alias LogpointApi.Data.Comment
   alias LogpointApi.Data.Credential
@@ -129,6 +134,22 @@ defmodule LogpointApi do
           SearchParams.t()
   def search_params(query, start_time, end_time, limit, repos) do
     SearchParams.new(query, start_time, end_time, limit, repos)
+  end
+
+  @doc """
+  Run a search and block until final results arrive.
+
+  Polls automatically, handling expired searches by resubmitting the query.
+
+  ## Options
+
+    * `:polling_interval` — milliseconds between polls (default: `1_000`)
+    * `:max_attempts`     — maximum poll iterations (default: `30`)
+
+  """
+  @spec run_search(Client.t(), SearchParams.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def run_search(%Client{} = client, %SearchParams{} = query, opts \\ []) do
+    SearchRunner.run(client, query, opts)
   end
 
   @doc """
