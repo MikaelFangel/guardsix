@@ -40,7 +40,16 @@ All API functions return `{:ok, map()}` or `{:error, term()}`. The ok value is t
 
 ## Search is asynchronous
 
-Search requires two steps: submit the query, then poll for results. The library does not include a polling helper.
+Search requires two steps: submit the query, then poll for results. Use `run_search/3` for automatic polling:
+
+```elixir
+query = LogpointApi.search_params("user=*", "Last 24 hours", 100, ["127.0.0.1"])
+{:ok, result} = LogpointApi.run_search(client, query)
+```
+
+Expired searches (`success: false`) are resubmitted automatically.
+
+For custom polling, use the low-level primitives:
 
 ```elixir
 {:ok, %{"search_id" => id}} = Search.get_id(client, query)
