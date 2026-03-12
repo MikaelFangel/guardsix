@@ -1,5 +1,8 @@
 # Guardsix
 
+> [!NOTE]
+> This package was previously published as `logpoint_api` and has been renamed to `guardsix` following the company rebranding.
+
 A stateless implementation of the [Guardsix SIEM API Reference](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference).
 The library is a wrapper around the API reference with the addition of builder patterns for alert rules and notifications. I try
 to make sure the library stays as true to the API as possible with minor simplifications so it is easier to correlate the lib with
