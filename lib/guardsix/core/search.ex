@@ -10,7 +10,7 @@ defmodule Guardsix.Core.Search do
   alias Guardsix.Data.SearchParams
   alias Guardsix.Net.SearchIncidentClient
 
-  @allowed_types [:user_preference, :loginspects, :guardsix_repos, :devices, :livesearches]
+  @allowed_types [:user_preference, :loginspects, :logpoint_repos, :devices, :livesearches]
 
   @doc """
   Create a search and get its search ID.
@@ -48,11 +48,11 @@ defmodule Guardsix.Core.Search do
   end
 
   @doc """
-  Get guardsix repos from the Guardsix instance.
+  Get repos from the Guardsix instance.
   """
-  @spec guardsix_repos(Client.t()) :: {:ok, map()} | {:error, term()}
-  def guardsix_repos(%Client{} = client) do
-    get_allowed_data(client, :guardsix_repos)
+  @spec repos(Client.t()) :: {:ok, map()} | {:error, term()}
+  def repos(%Client{} = client) do
+    get_allowed_data(client, :logpoint_repos)
   end
 
   @doc """

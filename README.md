@@ -51,7 +51,7 @@ query = Guardsix.search_params(
 alias Guardsix.Core.Search
 
 {:ok, user_prefs} = Search.user_preference(client)
-{:ok, repos}      = Search.guardsix_repos(client)
+{:ok, repos}      = Search.repos(client)
 {:ok, devices}    = Search.devices(client)
 ```
 

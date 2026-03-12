@@ -21,7 +21,7 @@ defmodule Guardsix do
       {:ok, %{"search_id" => id}} = Search.get_id(client, query)
       {:ok, result}               = Search.get_result(client, id)
       {:ok, prefs}                = Search.user_preference(client)
-      {:ok, repos}                = Search.guardsix_repos(client)
+      {:ok, repos}                = Search.repos(client)
 
   ## Incidents
 
