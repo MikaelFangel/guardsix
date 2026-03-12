@@ -1,7 +1,7 @@
 defmodule Guardsix.MixProject do
   use Mix.Project
 
-  @version "2.2.0"
+  @version "1.0.0"
   @source_url "https://github.com/MikaelFangel/guardsix"
 
   def project do
@@ -66,12 +66,10 @@ defmodule Guardsix.MixProject do
         "README.md",
         "CONTRIBUTING.md",
         "LICENSE",
-        "guides/howtos/polling-search-results.md",
-        "guides/upgrading/v2.md"
+        "guides/howtos/polling-search-results.md"
       ],
       groups_for_extras: [
-        "How-To": ~r/guides\/howtos\/.*/,
-        Upgrading: ~r/guides\/upgrading\/.*/
+        "How-To": ~r/guides\/howtos\/.*/
       ]
     ]
   end

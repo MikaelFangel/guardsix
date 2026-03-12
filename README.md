@@ -13,7 +13,7 @@ the API reference doc.
 ```elixir
 def deps do
   [
-    {:guardsix, "~> 2.0.0"}
+    {:guardsix, "~> 1.0.0"}
   ]
 end
 ```
