@@ -1,9 +1,9 @@
-defmodule LogpointApi.Data.EmailNotification do
+defmodule Guardsix.Data.EmailNotification do
   @moduledoc """
   Builder for email notification structs.
 
-  Wraps the [Email Notification for Alert Rules API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/email-notification-for-alert-rules).
-  Start with `LogpointApi.email_notification/2` and pipe through the builder
+  Wraps the [Email Notification for Alert Rules API](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/email-notification-for-alert-rules).
+  Start with `Guardsix.email_notification/2` and pipe through the builder
   functions to set subject, template, and other options.
   """
   @enforce_keys [:ids, :email_emails]
@@ -83,7 +83,7 @@ defmodule LogpointApi.Data.EmailNotification do
   end
 
   @doc """
-  Convert an `EmailNotification` struct into the flat map format expected by the Logpoint API.
+  Convert an `EmailNotification` struct into the flat map format expected by the Guardsix API.
   """
   def to_map(%__MODULE__{} = notif) do
     %{

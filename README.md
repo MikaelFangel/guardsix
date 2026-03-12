@@ -1,6 +1,9 @@
-# LogpointApi
+# Guardsix
 
-A stateless implementation of the [Logpoint SIEM API Reference](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference).
+> [!NOTE]
+> This package was previously published as `logpoint_api` and has been renamed to `guardsix` following the company rebranding.
+
+A stateless implementation of the [Guardsix SIEM API Reference](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference).
 The library is a wrapper around the API reference with the addition of builder patterns for alert rules and notifications. I try
 to make sure the library stays as true to the API as possible with minor simplifications so it is easier to correlate the lib with
 the API reference doc.
@@ -10,7 +13,7 @@ the API reference doc.
 ```elixir
 def deps do
   [
-    {:logpoint_api, "~> 2.0.0"}
+    {:guardsix, "~> 1.0.0"}
   ]
 end
 ```
@@ -18,20 +21,20 @@ end
 ## Basic Usage
 
 Create a universal client that can be used with all functions. This is a simplification over the split in the API design
-where some endpoints use JWT tokens and others don't. 
+where some endpoints use JWT tokens and others don't.
 
 ```elixir
-client = LogpointApi.client("https://logpoint.company.com", "admin", "your_secret_key")
+client = Guardsix.client("https://guardsix.company.com", "admin", "your_secret_key")
 ```
 
 ### Search
 
-Search includes all functions from the [search API reference](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/search-api) and for writing search_param queries please refer to [Search Log Data](https://docs.logpoint.com/siem/product-docs/readme/a_work-with-your-log-data/search_your_log_data).
+Search includes all functions from the [search API reference](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/search-api) and for writing search_param queries please refer to [Search Log Data](https://docs.guardsix.com/siem/product-docs/readme/a_work-with-your-log-data/search_your_log_data).
 
 ```elixir
-alias LogpointApi.Core.Search
+alias Guardsix.Core.Search
 
-query = LogpointApi.search_params(
+query = Guardsix.search_params(
   "user=*",
   "Last 24 hours",
   100,
@@ -45,19 +48,19 @@ query = LogpointApi.search_params(
 ### Instance Information
 
 ```elixir
-alias LogpointApi.Core.Search
+alias Guardsix.Core.Search
 
 {:ok, user_prefs} = Search.user_preference(client)
-{:ok, repos}      = Search.logpoint_repos(client)
+{:ok, repos}      = Search.repos(client)
 {:ok, devices}    = Search.devices(client)
 ```
 
 ### Incident Management
 
-The incident module wraps the [Incident API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/incident-api).
+The incident module wraps the [Incident API](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/incident-api).
 
 ```elixir
-alias LogpointApi.Core.Incident
+alias Guardsix.Core.Incident
 
 # List incidents within a time range
 {:ok, incidents} = Incident.list(client, 1_714_986_600, 1_715_031_000)
@@ -68,7 +71,7 @@ alias LogpointApi.Core.Incident
 {:ok, incident} = Incident.get(client, "incident_obj_id", "incident_id")
 
 # Add comments
-comments = [LogpointApi.comment("incident_id_1", "This needs attention")]
+comments = [Guardsix.comment("incident_id_1", "This needs attention")]
 {:ok, _} = Incident.add_comments(client, comments)
 
 # Assign and update states
@@ -83,12 +86,12 @@ comments = [LogpointApi.comment("incident_id_1", "This needs attention")]
 
 ### Alert Rules
 
-AlertRule wraps the [Alert Rules API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/alert_rules_api).
+AlertRule wraps the [Alert Rules API](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/alert_rules_api).
 All parameters for alert rule creation are defined but please refer to the alert rule builder for a composable structure
 for building rules.
 
 ```elixir
-alias LogpointApi.Core.AlertRule
+alias Guardsix.Core.AlertRule
 
 {:ok, rules} = AlertRule.list(client)
 {:ok, rule}  = AlertRule.get(client, "rule-id")
@@ -103,10 +106,10 @@ alias LogpointApi.Core.AlertRule
 Compose alert rules to be used with the create alert rule endpoint.
 
 ```elixir
-alias LogpointApi.Data.Rule
+alias Guardsix.Data.Rule
 
 rule =
-  LogpointApi.rule("Brute Force Detection")
+  Guardsix.rule("Brute Force Detection")
   |> Rule.description("Detects brute force login attempts")
   |> Rule.query("error_code=4625")
   |> Rule.time_range(1, :day)
@@ -124,12 +127,12 @@ rule =
 Compose notifications for alert rules.
 
 ```elixir
-alias LogpointApi.Data.EmailNotification
-alias LogpointApi.Data.HttpNotification
+alias Guardsix.Data.EmailNotification
+alias Guardsix.Data.HttpNotification
 
 # Email notification
 notif =
-  LogpointApi.email_notification(["rule-1"], "admin@example.com")
+  Guardsix.email_notification(["rule-1"], "admin@example.com")
   |> EmailNotification.subject("Alert: {{ rule_name }}")
   |> EmailNotification.template("<p>Details</p>")
 
@@ -137,7 +140,7 @@ notif =
 
 # HTTP notification with bearer auth
 webhook =
-  LogpointApi.http_notification(["rule-1"], "https://hooks.slack.com/abc", :post)
+  Guardsix.http_notification(["rule-1"], "https://hooks.slack.com/abc", :post)
   |> HttpNotification.body(~s({"text": "{{ rule_name }}"}))
   |> HttpNotification.bearer_auth("my-token")
 
@@ -149,13 +152,13 @@ webhook
 |> HttpNotification.basic_auth("user", "pass")
 ```
 
-### Logpoint Repos and User-Defined Lists
+### Guardsix Repos and User-Defined Lists
 
 ```elixir
-alias LogpointApi.Core.LogpointRepo
-alias LogpointApi.Core.UserDefinedList
+alias Guardsix.Core.GuardsixRepo
+alias Guardsix.Core.UserDefinedList
 
-{:ok, repos} = LogpointRepo.list(client)
+{:ok, repos} = GuardsixRepo.list(client)
 {:ok, lists} = UserDefinedList.list(client)
 ```
 
@@ -164,7 +167,7 @@ alias LogpointApi.Core.UserDefinedList
 Pass `ssl_verify: false` to disable SSL verification (e.g. for self-signed certificates):
 
 ```elixir
-client = LogpointApi.client("https://192.168.1.100", "admin", "your_secret_key", ssl_verify: false)
+client = Guardsix.client("https://192.168.1.100", "admin", "your_secret_key", ssl_verify: false)
 ```
 
 ## Error Handling
@@ -172,7 +175,7 @@ client = LogpointApi.client("https://192.168.1.100", "admin", "your_secret_key",
 All functions return `{:ok, result}` or `{:error, reason}` tuples:
 
 ```elixir
-alias LogpointApi.Core.Search
+alias Guardsix.Core.Search
 
 case Search.get_id(client, query) do
   {:ok, %{"search_id" => search_id}} ->

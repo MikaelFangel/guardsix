@@ -1,8 +1,8 @@
-defmodule LogpointApi.Data.Comment do
+defmodule Guardsix.Data.Comment do
   @moduledoc """
   An incident comment linking a comment string to an incident ID.
 
-  Built via `LogpointApi.comment/2`.
+  Built via `Guardsix.comment/2`.
   """
   @derive Jason.Encoder
   @enforce_keys :_id

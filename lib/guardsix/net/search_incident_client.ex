@@ -1,7 +1,7 @@
-defmodule LogpointApi.Net.SearchIncidentClient do
+defmodule Guardsix.Net.SearchIncidentClient do
   @moduledoc false
 
-  alias LogpointApi.Net.BaseClient
+  alias Guardsix.Net.BaseClient
 
   defdelegate new(base_url, ssl_verify \\ true), to: BaseClient
 
@@ -31,7 +31,7 @@ defmodule LogpointApi.Net.SearchIncidentClient do
     post(req, path, credential, body, :form)
   end
 
-  defp body_with_credential(%LogpointApi.Data.Credential{username: username, secret_key: secret}, body) do
+  defp body_with_credential(%Guardsix.Data.Credential{username: username, secret_key: secret}, body) do
     Map.merge(%{username: username, secret_key: secret}, body)
   end
 end

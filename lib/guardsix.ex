@@ -1,31 +1,31 @@
-defmodule LogpointApi do
+defmodule Guardsix do
   @moduledoc """
-  Elixir library for interacting with the Logpoint API.
+  Elixir library for interacting with the Guardsix API.
 
   Build a client, then pass it to any domain module.
 
   ## Setup
 
-      client = LogpointApi.client("https://logpoint.company.com", "admin", "secret")
+      client = Guardsix.client("https://guardsix.company.com", "admin", "secret")
 
   ## Search
 
-      query = LogpointApi.search_params("user=*", "Last 24 hours", 100, ["127.0.0.1"])
+      query = Guardsix.search_params("user=*", "Last 24 hours", 100, ["127.0.0.1"])
 
       # Block until final results (polls automatically)
-      {:ok, result} = LogpointApi.run_search(client, query)
+      {:ok, result} = Guardsix.run_search(client, query)
 
       # Low-level primitives are still available
-      alias LogpointApi.Core.Search
+      alias Guardsix.Core.Search
 
       {:ok, %{"search_id" => id}} = Search.get_id(client, query)
       {:ok, result}               = Search.get_result(client, id)
       {:ok, prefs}                = Search.user_preference(client)
-      {:ok, repos}                = Search.logpoint_repos(client)
+      {:ok, repos}                = Search.repos(client)
 
   ## Incidents
 
-      alias LogpointApi.Core.Incident
+      alias Guardsix.Core.Incident
 
       {:ok, incidents} = Incident.list(client, start_time, end_time)
       {:ok, states}    = Incident.list_states(client, start_time, end_time)
@@ -33,13 +33,13 @@ defmodule LogpointApi do
       {:ok, _}         = Incident.close(client, ["id2"])
       {:ok, _}         = Incident.reopen(client, ["id3"])
       {:ok, _}         = Incident.assign(client, ["id1"], "user_id")
-      {:ok, _}         = Incident.add_comments(client, [LogpointApi.comment("id1", "note")])
+      {:ok, _}         = Incident.add_comments(client, [Guardsix.comment("id1", "note")])
       {:ok, users}     = Incident.get_users(client)
 
   ## Alert Rules
 
-      alias LogpointApi.Data.Rule
-      alias LogpointApi.Core.AlertRule
+      alias Guardsix.Data.Rule
+      alias Guardsix.Core.AlertRule
 
       {:ok, rules} = AlertRule.list(client)
       {:ok, rule}  = AlertRule.get(client, "rule-id")
@@ -49,7 +49,7 @@ defmodule LogpointApi do
 
       # Builder-style alert rule creation
       rule =
-        LogpointApi.rule("Brute Force Detection")
+        Guardsix.rule("Brute Force Detection")
         |> Rule.description("Detects brute force login attempts")
         |> Rule.query("error_code=4625")
         |> Rule.time_range(1, :day)
@@ -63,49 +63,49 @@ defmodule LogpointApi do
       {:ok, _} = AlertRule.create(client, rule)
 
       # Email notification
-      alias LogpointApi.Data.EmailNotification
+      alias Guardsix.Data.EmailNotification
 
       notif =
-        LogpointApi.email_notification(["rule-1"], "admin@example.com")
+        Guardsix.email_notification(["rule-1"], "admin@example.com")
         |> EmailNotification.subject("Alert: {{ rule_name }}")
         |> EmailNotification.template("<p>Details</p>")
 
       {:ok, _} = AlertRule.create_email_notification(client, notif)
 
       # HTTP notification
-      alias LogpointApi.Data.HttpNotification
+      alias Guardsix.Data.HttpNotification
 
       webhook =
-        LogpointApi.http_notification(["rule-1"], "https://hooks.slack.com/abc", :post)
+        Guardsix.http_notification(["rule-1"], "https://hooks.slack.com/abc", :post)
         |> HttpNotification.body(~s({"text": "{{ rule_name }}"}))
         |> HttpNotification.bearer_auth("my-token")
 
       {:ok, _} = AlertRule.create_http_notification(client, webhook)
 
-  ## Logpoint Repos & User-Defined Lists
+  ## Guardsix Repos & User-Defined Lists
 
-      alias LogpointApi.Core.LogpointRepo
-      alias LogpointApi.Core.UserDefinedList
+      alias Guardsix.Core.GuardsixRepo
+      alias Guardsix.Core.UserDefinedList
 
-      {:ok, repos} = LogpointRepo.list(client)
+      {:ok, repos} = GuardsixRepo.list(client)
       {:ok, lists} = UserDefinedList.list(client)
 
   ## SSL
 
-      client = LogpointApi.client("https://192.168.1.100", "admin", "secret", ssl_verify: false)
+      client = Guardsix.client("https://192.168.1.100", "admin", "secret", ssl_verify: false)
   """
 
-  alias LogpointApi.Core.SearchRunner
-  alias LogpointApi.Data.Client
-  alias LogpointApi.Data.Comment
-  alias LogpointApi.Data.Credential
-  alias LogpointApi.Data.EmailNotification
-  alias LogpointApi.Data.HttpNotification
-  alias LogpointApi.Data.Rule
-  alias LogpointApi.Data.SearchParams
+  alias Guardsix.Core.SearchRunner
+  alias Guardsix.Data.Client
+  alias Guardsix.Data.Comment
+  alias Guardsix.Data.Credential
+  alias Guardsix.Data.EmailNotification
+  alias Guardsix.Data.HttpNotification
+  alias Guardsix.Data.Rule
+  alias Guardsix.Data.SearchParams
 
   @doc """
-  Create a client for the Logpoint API.
+  Create a client for the Guardsix API.
 
   ## Options
 

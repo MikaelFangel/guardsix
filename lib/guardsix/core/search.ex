@@ -1,14 +1,14 @@
-defmodule LogpointApi.Core.Search do
+defmodule Guardsix.Core.Search do
   @moduledoc """
-  Search logs and retrieve instance data from Logpoint.
+  Search logs and retrieve instance data from Guardsix.
 
-  Wraps the [Search API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/search-api).
-  Use `LogpointApi.search_params/4` to build the query struct.
+  Wraps the [Search API](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/search-api).
+  Use `Guardsix.search_params/4` to build the query struct.
   """
 
-  alias LogpointApi.Data.Client
-  alias LogpointApi.Data.SearchParams
-  alias LogpointApi.Net.SearchIncidentClient
+  alias Guardsix.Data.Client
+  alias Guardsix.Data.SearchParams
+  alias Guardsix.Net.SearchIncidentClient
 
   @allowed_types [:user_preference, :loginspects, :logpoint_repos, :devices, :livesearches]
 
@@ -32,7 +32,7 @@ defmodule LogpointApi.Core.Search do
   end
 
   @doc """
-  Get user preferences from the Logpoint instance.
+  Get user preferences from the Guardsix instance.
   """
   @spec user_preference(Client.t()) :: {:ok, map()} | {:error, term()}
   def user_preference(%Client{} = client) do
@@ -40,7 +40,7 @@ defmodule LogpointApi.Core.Search do
   end
 
   @doc """
-  Get loginspects from the Logpoint instance.
+  Get loginspects from the Guardsix instance.
   """
   @spec loginspects(Client.t()) :: {:ok, map()} | {:error, term()}
   def loginspects(%Client{} = client) do
@@ -48,15 +48,15 @@ defmodule LogpointApi.Core.Search do
   end
 
   @doc """
-  Get logpoint repos from the Logpoint instance.
+  Get repos from the Guardsix instance.
   """
-  @spec logpoint_repos(Client.t()) :: {:ok, map()} | {:error, term()}
-  def logpoint_repos(%Client{} = client) do
+  @spec repos(Client.t()) :: {:ok, map()} | {:error, term()}
+  def repos(%Client{} = client) do
     get_allowed_data(client, :logpoint_repos)
   end
 
   @doc """
-  Get devices from the Logpoint instance.
+  Get devices from the Guardsix instance.
   """
   @spec devices(Client.t()) :: {:ok, map()} | {:error, term()}
   def devices(%Client{} = client) do
@@ -64,7 +64,7 @@ defmodule LogpointApi.Core.Search do
   end
 
   @doc """
-  Get live searches from the Logpoint instance.
+  Get live searches from the Guardsix instance.
   """
   @spec livesearches(Client.t()) :: {:ok, map()} | {:error, term()}
   def livesearches(%Client{} = client) do

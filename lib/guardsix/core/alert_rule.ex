@@ -1,18 +1,18 @@
-defmodule LogpointApi.Core.AlertRule do
+defmodule Guardsix.Core.AlertRule do
   @moduledoc """
-  Manage alert rules and their notifications in Logpoint.
+  Manage alert rules and their notifications in Guardsix.
 
-  Wraps the [Alert Rules API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/alert_rules_api).
+  Wraps the [Alert Rules API](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/alert_rules_api).
   Use the `Rule`, `EmailNotification`, and `HttpNotification` builders to compose
   structs for creation endpoints.
   """
 
-  alias LogpointApi.Auth.JwtProvider
-  alias LogpointApi.Data.Client
-  alias LogpointApi.Data.EmailNotification
-  alias LogpointApi.Data.HttpNotification
-  alias LogpointApi.Data.Rule
-  alias LogpointApi.Net.AlertRuleClient
+  alias Guardsix.Auth.JwtProvider
+  alias Guardsix.Data.Client
+  alias Guardsix.Data.EmailNotification
+  alias Guardsix.Data.HttpNotification
+  alias Guardsix.Data.Rule
+  alias Guardsix.Net.AlertRuleClient
 
   @doc """
   List alert rules.

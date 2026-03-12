@@ -1,15 +1,15 @@
-defmodule LogpointApi.Core.SearchRunner do
+defmodule Guardsix.Core.SearchRunner do
   @moduledoc """
-  Blocking polling for Logpoint searches.
+  Blocking polling for Guardsix searches.
 
-  The Logpoint search API is asynchronous — submit a query, then poll for
+  The Guardsix search API is asynchronous — submit a query, then poll for
   results. `run/3` handles the polling loop, including resubmitting expired
   searches automatically.
   """
 
-  alias LogpointApi.Core.Search
-  alias LogpointApi.Data.Client
-  alias LogpointApi.Data.SearchParams
+  alias Guardsix.Core.Search
+  alias Guardsix.Data.Client
+  alias Guardsix.Data.SearchParams
 
   @default_polling_interval 1_000
   @default_max_attempts 30

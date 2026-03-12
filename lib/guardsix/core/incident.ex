@@ -1,13 +1,13 @@
-defmodule LogpointApi.Core.Incident do
+defmodule Guardsix.Core.Incident do
   @moduledoc """
-  Manage incidents in Logpoint.
+  Manage incidents in Guardsix.
 
-  Wraps the [Incident API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/incident-api)
+  Wraps the [Incident API](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/incident-api)
   for listing, assigning, commenting on, and changing the state of incidents.
   """
 
-  alias LogpointApi.Data.Client
-  alias LogpointApi.Net.SearchIncidentClient
+  alias Guardsix.Data.Client
+  alias Guardsix.Net.SearchIncidentClient
 
   @version "0.1"
 
@@ -104,7 +104,7 @@ defmodule LogpointApi.Core.Incident do
   end
 
   @doc """
-  Get users from the Logpoint instance.
+  Get users from the Guardsix instance.
   """
   @spec get_users(Client.t()) :: {:ok, map()} | {:error, term()}
   def get_users(%Client{} = client) do

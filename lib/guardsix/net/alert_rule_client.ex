@@ -1,7 +1,7 @@
-defmodule LogpointApi.Net.AlertRuleClient do
+defmodule Guardsix.Net.AlertRuleClient do
   @moduledoc false
 
-  alias LogpointApi.Net.BaseClient
+  alias Guardsix.Net.BaseClient
 
   defdelegate new(base_url, ssl_verify \\ true), to: BaseClient
 

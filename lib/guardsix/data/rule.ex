@@ -1,8 +1,8 @@
-defmodule LogpointApi.Data.Rule do
+defmodule Guardsix.Data.Rule do
   @moduledoc """
   Builder for alert rule structs.
 
-  Start with `LogpointApi.rule/1` and pipe through the builder functions
+  Start with `Guardsix.rule/1` and pipe through the builder functions
   to set fields. Pass the result to `AlertRule.create/2`.
   """
   @enforce_keys [:name]
@@ -163,7 +163,7 @@ defmodule LogpointApi.Data.Rule do
   def foureyes(%__MODULE__{} = rule, enabled) when is_boolean(enabled), do: %{rule | foureyes: enabled}
 
   @doc """
-  Convert a `Rule` struct into the nested map format expected by the Logpoint API.
+  Convert a `Rule` struct into the nested map format expected by the Guardsix API.
   """
   def to_map(%__MODULE__{} = rule) do
     %{

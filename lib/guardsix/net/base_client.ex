@@ -1,4 +1,4 @@
-defmodule LogpointApi.Net.BaseClient do
+defmodule Guardsix.Net.BaseClient do
   @moduledoc false
 
   def new(base_url, ssl_verify \\ true) do

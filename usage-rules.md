@@ -1,50 +1,50 @@
-# Rules for working with LogpointApi
+# Rules for working with Guardsix
 
 ## Architecture
 
-LogpointApi is a stateless wrapper around the Logpoint SIEM API. There is no OTP process or connection pool — every function call makes a direct HTTP request.
+Guardsix is a stateless wrapper around the Guardsix SIEM API. There is no OTP process or connection pool — every function call makes a direct HTTP request.
 
 All API calls require a `Client` struct. Always create it through the facade:
 
 ```elixir
-client = LogpointApi.client("https://logpoint.company.com", "admin", "secret_key")
+client = Guardsix.client("https://guardsix.company.com", "admin", "secret_key")
 ```
 
-Never construct `Client`, `Credential`, or other data structs directly. Use the facade functions in `LogpointApi`:
-- `LogpointApi.client/3,4` — client
-- `LogpointApi.search_params/4,5` — search query parameters
-- `LogpointApi.comment/2` — incident comment
-- `LogpointApi.rule/1` — alert rule builder
-- `LogpointApi.email_notification/2` — email notification builder
-- `LogpointApi.http_notification/3` — HTTP notification builder
+Never construct `Client`, `Credential`, or other data structs directly. Use the facade functions in `Guardsix`:
+- `Guardsix.client/3,4` — client
+- `Guardsix.search_params/4,5` — search query parameters
+- `Guardsix.comment/2` — incident comment
+- `Guardsix.rule/1` — alert rule builder
+- `Guardsix.email_notification/2` — email notification builder
+- `Guardsix.http_notification/3` — HTTP notification builder
 
 ## Module layout
 
-Domain logic lives under `LogpointApi.Core.*`:
+Domain logic lives under `Guardsix.Core.*`:
 - `Search` — search queries, results, instance info
 - `Incident` — incident listing, state changes, comments
 - `AlertRule` — alert rule CRUD, notifications (includes `update/3` and `get_notification/3`)
-- `LogpointRepo` — searchable logpoint repos
+- `GuardsixRepo` — searchable repos
 - `UserDefinedList` — user-defined lists
 
-Builder structs live under `LogpointApi.Data.*`:
+Builder structs live under `Guardsix.Data.*`:
 - `Rule` — alert rule builder (pipe through setter functions, pass to `AlertRule.create/2`)
 - `EmailNotification` — email notification builder
 - `HttpNotification` — HTTP notification builder
 
-Do not use `LogpointApi.Net.*` or `LogpointApi.Auth.*` directly. These are internal.
+Do not use `Guardsix.Net.*` or `Guardsix.Auth.*` directly. These are internal.
 
 ## Return values
 
-All API functions return `{:ok, map()}` or `{:error, term()}`. The ok value is the decoded JSON response from the Logpoint API as a map with string keys.
+All API functions return `{:ok, map()}` or `{:error, term()}`. The ok value is the decoded JSON response from the Guardsix API as a map with string keys.
 
 ## Search is asynchronous
 
 Search requires two steps: submit the query, then poll for results. Use `run_search/3` for automatic polling:
 
 ```elixir
-query = LogpointApi.search_params("user=*", "Last 24 hours", 100, ["127.0.0.1"])
-{:ok, result} = LogpointApi.run_search(client, query)
+query = Guardsix.search_params("user=*", "Last 24 hours", 100, ["127.0.0.1"])
+{:ok, result} = Guardsix.run_search(client, query)
 ```
 
 Expired searches (`success: false`) are resubmitted automatically.
@@ -82,7 +82,7 @@ Rule.time_range(rule, 120)          # auto-promotes to 2 hours
 SSL verification is enabled by default. Pass `ssl_verify: false` only for self-signed certificates in isolated environments:
 
 ```elixir
-client = LogpointApi.client("https://192.168.1.100", "admin", "secret", ssl_verify: false)
+client = Guardsix.client("https://192.168.1.100", "admin", "secret", ssl_verify: false)
 ```
 
 ## Authentication
