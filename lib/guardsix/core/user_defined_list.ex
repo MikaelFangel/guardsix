@@ -1,13 +1,13 @@
-defmodule LogpointApi.Core.UserDefinedList do
+defmodule Guardsix.Core.UserDefinedList do
   @moduledoc """
-  Manage user-defined lists in Logpoint.
+  Manage user-defined lists in Guardsix.
 
-  Wraps the [User Defined Lists API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/user-defined-lists-api).
+  Wraps the [User Defined Lists API](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/user-defined-lists-api).
   """
 
-  alias LogpointApi.Auth.JwtProvider
-  alias LogpointApi.Data.Client
-  alias LogpointApi.Net.AlertRuleClient
+  alias Guardsix.Auth.JwtProvider
+  alias Guardsix.Data.Client
+  alias Guardsix.Net.AlertRuleClient
 
   @doc """
   List user defined lists.

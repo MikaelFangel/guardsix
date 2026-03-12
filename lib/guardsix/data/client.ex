@@ -1,11 +1,11 @@
-defmodule LogpointApi.Data.Client do
+defmodule Guardsix.Data.Client do
   @moduledoc """
   Holds the base URL, credential, and SSL settings for API requests.
 
-  Built via `LogpointApi.client/3,4`.
+  Built via `Guardsix.client/3,4`.
   """
 
-  alias LogpointApi.Data.Credential
+  alias Guardsix.Data.Credential
 
   @derive {Inspect, except: [:credential]}
   @enforce_keys [:base_url, :credential]

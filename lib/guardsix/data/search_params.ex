@@ -1,8 +1,8 @@
-defmodule LogpointApi.Data.SearchParams do
+defmodule Guardsix.Data.SearchParams do
   @moduledoc """
-  Search query parameters passed to `LogpointApi.Core.Search` functions.
+  Search query parameters passed to `Guardsix.Core.Search` functions.
 
-  Built via `LogpointApi.search_params/4,5`.
+  Built via `Guardsix.search_params/4,5`.
   """
   @derive Jason.Encoder
   defstruct [:query, :time_range, :limit, :repos]

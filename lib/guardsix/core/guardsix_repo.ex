@@ -1,16 +1,16 @@
-defmodule LogpointApi.Core.LogpointRepo do
+defmodule Guardsix.Core.GuardsixRepo do
   @moduledoc """
-  List searchable logpoints and their repos.
+  List searchable repos.
 
-  Wraps the [Repos API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/repos_api).
+  Wraps the [Repos API](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/repos_api).
   """
 
-  alias LogpointApi.Auth.JwtProvider
-  alias LogpointApi.Data.Client
-  alias LogpointApi.Net.AlertRuleClient
+  alias Guardsix.Auth.JwtProvider
+  alias Guardsix.Data.Client
+  alias Guardsix.Net.AlertRuleClient
 
   @doc """
-  List all searchable logpoints with repos.
+  List all searchable repos.
   """
   @spec list(Client.t()) :: {:ok, map()} | {:error, term()}
   def list(%Client{} = client) do

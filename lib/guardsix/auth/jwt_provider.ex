@@ -1,4 +1,4 @@
-defmodule LogpointApi.Auth.JwtProvider do
+defmodule Guardsix.Auth.JwtProvider do
   @moduledoc false
   use Joken.Config
 

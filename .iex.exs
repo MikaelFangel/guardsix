@@ -1,2 +1,2 @@
-alias LogpointApi.Core.AlertRule
-alias LogpointApi.Data.Rule
+alias Guardsix.Core.AlertRule
+alias Guardsix.Data.Rule

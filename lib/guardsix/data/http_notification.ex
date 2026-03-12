@@ -1,9 +1,9 @@
-defmodule LogpointApi.Data.HttpNotification do
+defmodule Guardsix.Data.HttpNotification do
   @moduledoc """
   Builder for HTTP notification structs.
 
-  Wraps the [HTTP Notification for Alert Rules API](https://docs.logpoint.com/siem/product-docs/readme/siem_api_reference/http-notification-for-alert-rules).
-  Start with `LogpointApi.http_notification/3` and pipe through the builder
+  Wraps the [HTTP Notification for Alert Rules API](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/http-notification-for-alert-rules).
+  Start with `Guardsix.http_notification/3` and pipe through the builder
   functions to configure the request and auth. Supports `no_auth/1`,
   `api_token_auth/3`, `basic_auth/3`, and `bearer_auth/2`.
   """
@@ -102,7 +102,7 @@ defmodule LogpointApi.Data.HttpNotification do
   end
 
   @doc """
-  Convert an `HttpNotification` struct into the flat map format expected by the Logpoint API.
+  Convert an `HttpNotification` struct into the flat map format expected by the Guardsix API.
   """
   def to_map(%__MODULE__{} = notif) do
     %{

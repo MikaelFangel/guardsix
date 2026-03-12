@@ -1,12 +1,12 @@
-defmodule LogpointApi.MixProject do
+defmodule Guardsix.MixProject do
   use Mix.Project
 
   @version "2.2.0"
-  @source_url "https://github.com/MikaelFangel/logpoint_api"
+  @source_url "https://github.com/MikaelFangel/guardsix"
 
   def project do
     [
-      app: :logpoint_api,
+      app: :guardsix,
       version: @version,
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
@@ -38,7 +38,7 @@ defmodule LogpointApi.MixProject do
 
   defp description do
     """
-    A stateless Elixir wrapper for the Logpoint SIEM API.
+    A stateless Elixir wrapper for the Guardsix SIEM API.
     Covers searching, incidents, alert rules, user-defined lists, and repos
     with builder patterns for rules and notifications.
     """
@@ -46,11 +46,11 @@ defmodule LogpointApi.MixProject do
 
   defp package do
     [
-      name: "logpoint_api",
+      name: "guardsix",
       licenses: ["MIT"],
       links: %{
         "GitHub" => @source_url,
-        "Documentation" => "https://hexdocs.pm/logpoint_api"
+        "Documentation" => "https://hexdocs.pm/guardsix"
       },
       maintainers: ["Mikael Fangel"],
       files: ~w(lib mix.exs README.md LICENSE CONTRIBUTING.md usage-rules.md)
