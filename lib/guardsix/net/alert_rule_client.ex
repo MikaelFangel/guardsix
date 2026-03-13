@@ -22,4 +22,10 @@ defmodule Guardsix.Net.AlertRuleClient do
 
     BaseClient.decode_response(Req.post(req, url: path, form: body))
   end
+
+  def post_multipart(req, path, token, body) do
+    req = Req.merge(req, auth: {:bearer, token})
+
+    BaseClient.decode_response(Req.post(req, url: path, form_multipart: body))
+  end
 end
