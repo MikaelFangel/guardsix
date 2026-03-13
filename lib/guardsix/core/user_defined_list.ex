@@ -36,10 +36,13 @@ defmodule Guardsix.Core.UserDefinedList do
   """
   @spec import_static(Client.t(), String.t(), String.t()) :: {:ok, map()} | {:error, term()}
   def import_static(%Client{} = client, name, content) when is_binary(name) and is_binary(content) do
-    body = %{package_import_name: name, package_import: content}
+    body = %{
+      package_import_name: name,
+      package_import: {content, filename: "#{name}.csv", content_type: "text/csv"}
+    }
 
     with_write_token(client, fn token ->
-      AlertRuleClient.post_form(req(client), "/UserDefinedList/import_api", token, body)
+      AlertRuleClient.post_multipart(req(client), "/UserDefinedList/import_api", token, body)
     end)
   end
 
