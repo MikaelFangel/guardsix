@@ -57,7 +57,7 @@ defmodule Guardsix.Core.SearchRunner do
         Process.sleep(polling_interval)
         poll(client, query, search_id, polling_interval, max_attempts, attempt + 1)
 
-      {:ok, %{"success" => false}} ->
+      {:error, "Forgotten search"} ->
         case Search.get_id(client, query) do
           {:ok, %{"search_id" => new_id}} ->
             poll(client, query, new_id, polling_interval, max_attempts, attempt + 1)
