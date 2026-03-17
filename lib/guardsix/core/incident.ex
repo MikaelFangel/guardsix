@@ -79,28 +79,14 @@ defmodule Guardsix.Core.Incident do
     SearchIncidentClient.post_json(req(client), "/assign_incident", client.credential, body)
   end
 
-  @doc """
-  Resolve incidents.
-  """
-  @spec resolve(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
-  def resolve(%Client{} = client, incident_ids) when is_list(incident_ids) do
-    change_status(client, "/resolve_incident", incident_ids)
-  end
-
-  @doc """
-  Close incidents.
-  """
-  @spec close(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
-  def close(%Client{} = client, incident_ids) when is_list(incident_ids) do
-    change_status(client, "/close_incident", incident_ids)
-  end
-
-  @doc """
-  Reopen incidents.
-  """
-  @spec reopen(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
-  def reopen(%Client{} = client, incident_ids) when is_list(incident_ids) do
-    change_status(client, "/reopen_incident", incident_ids)
+  for status_change <- ~w(resolve close reopen)a do
+    @doc """
+    #{status_change |> to_string() |> String.capitalize()} incidents.
+    """
+    @spec unquote(status_change)(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
+    def unquote(status_change)(%Client{} = client, incident_ids) when is_list(incident_ids) do
+      change_status(client, "/#{unquote(status_change)}_incident", incident_ids)
+    end
   end
 
   @doc """
