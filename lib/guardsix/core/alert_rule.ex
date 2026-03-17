@@ -78,34 +78,20 @@ defmodule Guardsix.Core.AlertRule do
     end)
   end
 
-  @doc """
-  Delete alert rules by IDs.
-  """
-  @spec delete(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
-  def delete(%Client{} = client, ids) when is_list(ids) do
-    with_write_token(client, fn token ->
-      AlertRuleClient.post(req(client), "/AlertRules/delete_api", token, %{ids: ids})
-    end)
-  end
-
-  @doc """
-  Activate alert rules by IDs.
-  """
-  @spec activate(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
-  def activate(%Client{} = client, ids) when is_list(ids) do
-    with_write_token(client, fn token ->
-      AlertRuleClient.post(req(client), "/AlertRules/activate_api", token, %{ids: ids})
-    end)
-  end
-
-  @doc """
-  Deactivate alert rules by IDs.
-  """
-  @spec deactivate(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
-  def deactivate(%Client{} = client, ids) when is_list(ids) do
-    with_write_token(client, fn token ->
-      AlertRuleClient.post(req(client), "/AlertRules/deactivate_api", token, %{ids: ids})
-    end)
+  for {function_name, path} <- [
+        delete: "delete_api",
+        activate: "activate_api",
+        deactivate: "deactivate_api"
+      ] do
+    @doc """
+    #{function_name |> to_string() |> String.capitalize()} alert rules by IDs.
+    """
+    @spec unquote(function_name)(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
+    def unquote(function_name)(%Client{} = client, ids) when is_list(ids) do
+      with_write_token(client, fn token ->
+        AlertRuleClient.post(req(client), "/AlertRules/#{unquote(path)}", token, %{ids: ids})
+      end)
+    end
   end
 
   @doc """

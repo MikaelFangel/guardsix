@@ -11,21 +11,15 @@ defmodule Guardsix.Net.AlertRuleClient do
     BaseClient.decode_response(Req.get(req, url: path, params: params))
   end
 
-  def post(req, path, token, body) do
-    req = Req.merge(req, auth: {:bearer, token})
+  for {function_name, body_opt} <- [
+        post: :json,
+        post_form: :form,
+        post_multipart: :form_multipart
+      ] do
+    def unquote(function_name)(req, path, token, body) do
+      req = Req.merge(req, auth: {:bearer, token})
 
-    BaseClient.decode_response(Req.post(req, url: path, json: body))
-  end
-
-  def post_form(req, path, token, body) do
-    req = Req.merge(req, auth: {:bearer, token})
-
-    BaseClient.decode_response(Req.post(req, url: path, form: body))
-  end
-
-  def post_multipart(req, path, token, body) do
-    req = Req.merge(req, auth: {:bearer, token})
-
-    BaseClient.decode_response(Req.post(req, url: path, form_multipart: body))
+      BaseClient.decode_response(Req.post(req, [{:url, path}, {unquote(body_opt), body}]))
+    end
   end
 end

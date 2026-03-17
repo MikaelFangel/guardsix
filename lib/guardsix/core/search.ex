@@ -10,15 +10,26 @@ defmodule Guardsix.Core.Search do
   alias Guardsix.Data.SearchParams
   alias Guardsix.Net.SearchIncidentClient
 
-  @allowed_types [:user_preference, :loginspects, :logpoint_repos, :devices, :livesearches]
+  @allowed_types [
+    user_preference: :user_preference,
+    loginspects: :loginspects,
+    repos: :logpoint_repos,
+    devices: :devices,
+    livesearches: :livesearches
+  ]
+
+  @allowed_type_values Keyword.values(@allowed_types)
 
   @doc """
   Create a search and get its search ID.
   """
   @spec get_id(Client.t(), SearchParams.t()) :: {:ok, map()} | {:error, term()}
   def get_id(%Client{} = client, %SearchParams{} = query) do
-    request_data = SearchParams.to_form_data(query)
-    request = create_encoded_request(request_data)
+    request =
+      query
+      |> SearchParams.to_form_data()
+      |> create_encoded_request()
+
     SearchIncidentClient.post_form(req(client), "/getsearchlogs", client.credential, request)
   end
 
@@ -28,50 +39,23 @@ defmodule Guardsix.Core.Search do
   @spec get_result(Client.t(), String.t()) :: {:ok, map()} | {:error, term()}
   def get_result(%Client{} = client, search_id) when is_binary(search_id) do
     request = create_encoded_request(%{search_id: search_id})
+
     SearchIncidentClient.post_form(req(client), "/getsearchlogs", client.credential, request)
   end
 
-  @doc """
-  Get user preferences from the Guardsix instance.
-  """
-  @spec user_preference(Client.t()) :: {:ok, map()} | {:error, term()}
-  def user_preference(%Client{} = client) do
-    get_allowed_data(client, :user_preference)
+  for {function_name, type} <- @allowed_types do
+    name = function_name |> to_string() |> String.replace("_", " ")
+
+    @doc """
+    Get #{name} from the Guardsix instance.
+    """
+    @spec unquote(function_name)(Client.t()) :: {:ok, map()} | {:error, term()}
+    def unquote(function_name)(%Client{} = client) do
+      get_allowed_data(client, unquote(type))
+    end
   end
 
-  @doc """
-  Get loginspects from the Guardsix instance.
-  """
-  @spec loginspects(Client.t()) :: {:ok, map()} | {:error, term()}
-  def loginspects(%Client{} = client) do
-    get_allowed_data(client, :loginspects)
-  end
-
-  @doc """
-  Get repos from the Guardsix instance.
-  """
-  @spec repos(Client.t()) :: {:ok, map()} | {:error, term()}
-  def repos(%Client{} = client) do
-    get_allowed_data(client, :logpoint_repos)
-  end
-
-  @doc """
-  Get devices from the Guardsix instance.
-  """
-  @spec devices(Client.t()) :: {:ok, map()} | {:error, term()}
-  def devices(%Client{} = client) do
-    get_allowed_data(client, :devices)
-  end
-
-  @doc """
-  Get live searches from the Guardsix instance.
-  """
-  @spec livesearches(Client.t()) :: {:ok, map()} | {:error, term()}
-  def livesearches(%Client{} = client) do
-    get_allowed_data(client, :livesearches)
-  end
-
-  defp get_allowed_data(%Client{} = client, type) when type in @allowed_types do
+  defp get_allowed_data(%Client{} = client, type) when type in @allowed_type_values do
     SearchIncidentClient.post_form(req(client), "/getalloweddata", client.credential, %{type: type})
   end
 
