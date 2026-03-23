@@ -175,6 +175,35 @@ defmodule Guardsix do
   end
 
   @doc """
+  Get the default authentication method of a Guardsix instance.
+
+  Like `version/2`, this scrapes the landing page and does not require authentication.
+
+  ## Options
+
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
+  ## Examples
+
+      {:ok, "LogpointAuthentication"} = Guardsix.default_auth("https://guardsix.example.com")
+
+  """
+  @spec default_auth(String.t(), keyword()) :: {:ok, String.t()} | {:error, term()}
+  def default_auth(base_url, opts \\ []) do
+    ssl_verify = Keyword.get(opts, :ssl_verify, true)
+    req = BaseClient.new(base_url, ssl_verify)
+
+    with {:ok, %{status: 200, body: body}} <- Req.get(req),
+         [_, auth] <- Regex.run(~r/DEFAULT_AUTH\s*=\s*"([^"]+)"/, body) do
+      {:ok, auth}
+    else
+      {:ok, %{status: status}} -> {:error, "expected HTTP 200, got #{status}"}
+      {:error, error} -> {:error, error}
+      nil -> {:error, "default auth not found in response"}
+    end
+  end
+
+  @doc """
   Create a client for the Guardsix API.
 
   ## Options
