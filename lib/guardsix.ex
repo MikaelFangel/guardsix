@@ -220,6 +220,29 @@ defmodule Guardsix do
   end
 
   @doc """
+  Create an authenticated session for UI endpoints that do not support JWT.
+
+  > #### Warning {: .warning}
+  >
+  > This relies on internal LogPoint UI endpoints and may break if LogPoint
+  > changes its login flow, CSRF handling, or page structure.
+
+  ## Options
+
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
+  ## Examples
+
+      {:ok, session} = Guardsix.session("https://guardsix.example.com", "admin", "password")
+
+  """
+  @spec session(String.t(), String.t(), String.t(), keyword()) ::
+          {:ok, Guardsix.Data.Session.t()} | {:error, term()}
+  def session(base_url, username, password, opts \\ []) do
+    Guardsix.Auth.SessionProvider.login(base_url, username, password, opts)
+  end
+
+  @doc """
   Create a client for the Guardsix API.
 
   ## Options
