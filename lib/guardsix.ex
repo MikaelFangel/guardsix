@@ -103,6 +103,47 @@ defmodule Guardsix do
   alias Guardsix.Data.HttpNotification
   alias Guardsix.Data.Rule
   alias Guardsix.Data.SearchParams
+  alias Guardsix.Net.BaseClient
+
+  @doc """
+  Fetch the version of a running Guardsix instance from its landing page.
+
+  ## Options
+
+    * `:format` - `:short` (default) returns the semantic version (e.g. `"7.7.1"`),
+                  `:long` returns the full build version (e.g. `"7.7.1.0_1766842968"`)
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
+  ## Examples
+
+      {:ok, "7.7.1"} = Guardsix.version("https://guardsix.example.com")
+      {:ok, "7.7.1.0_1766842968"} = Guardsix.version("https://guardsix.example.com", format: :long)
+
+  """
+  @spec version(String.t(), keyword()) :: {:ok, String.t()} | {:error, term()}
+  def version(base_url, opts \\ []) do
+    format = Keyword.get(opts, :format, :short)
+    ssl_verify = Keyword.get(opts, :ssl_verify, true)
+    req = BaseClient.new(base_url, ssl_verify)
+
+    with {:ok, %{status: 200, body: body}} <- Req.get(req),
+         [_, raw_version] <- Regex.run(~r/JS_VERSION\s*=\s*"([^"]+)"/, body) do
+      {:ok, format_version(raw_version, format)}
+    else
+      {:ok, %{status: status}} -> {:error, "expected HTTP 200, got #{status}"}
+      {:error, error} -> {:error, error}
+      nil -> {:error, "version not found in response"}
+    end
+  end
+
+  defp format_version(version, :long), do: version
+
+  defp format_version(version, :short) do
+    case Regex.run(~r/^(\d+\.\d+\.\d+)/, version) do
+      [_, semver] -> semver
+      nil -> version
+    end
+  end
 
   @doc """
   Create a client for the Guardsix API.
