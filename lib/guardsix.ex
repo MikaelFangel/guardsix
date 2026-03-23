@@ -146,6 +146,35 @@ defmodule Guardsix do
   end
 
   @doc """
+  Check whether a Guardsix instance is running in debug mode.
+
+  Like `version/2`, this scrapes the landing page and does not require authentication.
+
+  ## Options
+
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
+  ## Examples
+
+      {:ok, false} = Guardsix.debug?(\"https://guardsix.example.com\")
+
+  """
+  @spec debug?(String.t(), keyword()) :: {:ok, boolean()} | {:error, term()}
+  def debug?(base_url, opts \\ []) do
+    ssl_verify = Keyword.get(opts, :ssl_verify, true)
+    req = BaseClient.new(base_url, ssl_verify)
+
+    with {:ok, %{status: 200, body: body}} <- Req.get(req),
+         [_, value] <- Regex.run(~r/IS_DEBUG\s*=\s*eval\("(\w+)"/, body) do
+      {:ok, String.downcase(value) == "true"}
+    else
+      {:ok, %{status: status}} -> {:error, "expected HTTP 200, got #{status}"}
+      {:error, error} -> {:error, error}
+      nil -> {:error, "debug mode not found in response"}
+    end
+  end
+
+  @doc """
   Create a client for the Guardsix API.
 
   ## Options
