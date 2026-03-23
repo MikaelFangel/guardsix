@@ -204,6 +204,35 @@ defmodule Guardsix do
   end
 
   @doc """
+  Check whether a Guardsix instance has failover enabled.
+
+  Like `version/2`, this scrapes the landing page and does not require authentication.
+
+  ## Options
+
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
+  ## Examples
+
+      {:ok, false} = Guardsix.failover?("https://guardsix.example.com")
+
+  """
+  @spec failover?(String.t(), keyword()) :: {:ok, boolean()} | {:error, term()}
+  def failover?(base_url, opts \\ []) do
+    ssl_verify = Keyword.get(opts, :ssl_verify, true)
+    req = BaseClient.new(base_url, ssl_verify)
+
+    with {:ok, %{status: 200, body: body}} <- Req.get(req),
+         [_, value] <- Regex.run(~r/FAIL_OVER_ENABLED\s*=\s*"(\w+)"/, body) do
+      {:ok, String.downcase(value) == "true"}
+    else
+      {:ok, %{status: status}} -> {:error, "expected HTTP 200, got #{status}"}
+      {:error, error} -> {:error, error}
+      nil -> {:error, "failover status not found in response"}
+    end
+  end
+
+  @doc """
   Create a client for the Guardsix API.
 
   ## Options
