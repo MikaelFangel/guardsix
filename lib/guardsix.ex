@@ -105,6 +105,12 @@ defmodule Guardsix do
   alias Guardsix.Data.SearchParams
   alias Guardsix.Net.BaseClient
 
+  @js_version_pattern ~r/JS_VERSION\s*=\s*"([^"]+)"/
+  @is_debug_pattern ~r/IS_DEBUG\s*=\s*eval\("(\w+)"/
+  @default_auth_pattern ~r/DEFAULT_AUTH\s*=\s*"([^"]+)"/
+  @failover_pattern ~r/FAIL_OVER_ENABLED\s*=\s*"(\w+)"/
+  @semver_pattern ~r/^(\d+\.\d+\.\d+)/
+
   @doc """
   Fetch the version of a running Guardsix instance from its landing page.
 
@@ -123,32 +129,15 @@ defmodule Guardsix do
   @spec version(String.t(), keyword()) :: {:ok, String.t()} | {:error, term()}
   def version(base_url, opts \\ []) do
     format = Keyword.get(opts, :format, :short)
-    ssl_verify = Keyword.get(opts, :ssl_verify, true)
-    req = BaseClient.new(base_url, ssl_verify)
 
-    with {:ok, %{status: 200, body: body}} <- Req.get(req),
-         [_, raw_version] <- Regex.run(~r/JS_VERSION\s*=\s*"([^"]+)"/, body) do
-      {:ok, format_version(raw_version, format)}
-    else
-      {:ok, %{status: status}} -> {:error, "expected HTTP 200, got #{status}"}
-      {:error, error} -> {:error, error}
-      nil -> {:error, "version not found in response"}
-    end
-  end
-
-  defp format_version(version, :long), do: version
-
-  defp format_version(version, :short) do
-    case Regex.run(~r/^(\d+\.\d+\.\d+)/, version) do
-      [_, semver] -> semver
-      nil -> version
+    case scrape_landing_page(base_url, @js_version_pattern, opts) do
+      {:ok, raw_version} -> {:ok, format_version(raw_version, format)}
+      {:error, _} = error -> error
     end
   end
 
   @doc """
   Check whether a Guardsix instance is running in debug mode.
-
-  Like `version/2`, this scrapes the landing page and does not require authentication.
 
   ## Options
 
@@ -156,28 +145,19 @@ defmodule Guardsix do
 
   ## Examples
 
-      {:ok, false} = Guardsix.debug?(\"https://guardsix.example.com\")
+      {:ok, false} = Guardsix.debug?("https://guardsix.example.com")
 
   """
   @spec debug?(String.t(), keyword()) :: {:ok, boolean()} | {:error, term()}
   def debug?(base_url, opts \\ []) do
-    ssl_verify = Keyword.get(opts, :ssl_verify, true)
-    req = BaseClient.new(base_url, ssl_verify)
-
-    with {:ok, %{status: 200, body: body}} <- Req.get(req),
-         [_, value] <- Regex.run(~r/IS_DEBUG\s*=\s*eval\("(\w+)"/, body) do
-      {:ok, String.downcase(value) == "true"}
-    else
-      {:ok, %{status: status}} -> {:error, "expected HTTP 200, got #{status}"}
-      {:error, error} -> {:error, error}
-      nil -> {:error, "debug mode not found in response"}
+    case scrape_landing_page(base_url, @is_debug_pattern, opts) do
+      {:ok, debug_flag} -> {:ok, String.downcase(debug_flag) == "true"}
+      {:error, _} = error -> error
     end
   end
 
   @doc """
   Get the default authentication method of a Guardsix instance.
-
-  Like `version/2`, this scrapes the landing page and does not require authentication.
 
   ## Options
 
@@ -190,23 +170,14 @@ defmodule Guardsix do
   """
   @spec default_auth(String.t(), keyword()) :: {:ok, String.t()} | {:error, term()}
   def default_auth(base_url, opts \\ []) do
-    ssl_verify = Keyword.get(opts, :ssl_verify, true)
-    req = BaseClient.new(base_url, ssl_verify)
-
-    with {:ok, %{status: 200, body: body}} <- Req.get(req),
-         [_, auth] <- Regex.run(~r/DEFAULT_AUTH\s*=\s*"([^"]+)"/, body) do
-      {:ok, auth}
-    else
-      {:ok, %{status: status}} -> {:error, "expected HTTP 200, got #{status}"}
-      {:error, error} -> {:error, error}
-      nil -> {:error, "default auth not found in response"}
+    case scrape_landing_page(base_url, @default_auth_pattern, opts) do
+      {:ok, auth} -> {:ok, auth}
+      {:error, _} = error -> error
     end
   end
 
   @doc """
   Check whether a Guardsix instance has failover enabled.
-
-  Like `version/2`, this scrapes the landing page and does not require authentication.
 
   ## Options
 
@@ -219,16 +190,32 @@ defmodule Guardsix do
   """
   @spec failover?(String.t(), keyword()) :: {:ok, boolean()} | {:error, term()}
   def failover?(base_url, opts \\ []) do
+    case scrape_landing_page(base_url, @failover_pattern, opts) do
+      {:ok, failover_flag} -> {:ok, String.downcase(failover_flag) == "true"}
+      {:error, _} = error -> error
+    end
+  end
+
+  defp scrape_landing_page(base_url, pattern, opts) do
     ssl_verify = Keyword.get(opts, :ssl_verify, true)
     req = BaseClient.new(base_url, ssl_verify)
 
     with {:ok, %{status: 200, body: body}} <- Req.get(req),
-         [_, value] <- Regex.run(~r/FAIL_OVER_ENABLED\s*=\s*"(\w+)"/, body) do
-      {:ok, String.downcase(value) == "true"}
+         [_, value] <- Regex.run(pattern, body) do
+      {:ok, value}
     else
       {:ok, %{status: status}} -> {:error, "expected HTTP 200, got #{status}"}
       {:error, error} -> {:error, error}
-      nil -> {:error, "failover status not found in response"}
+      nil -> {:error, "not found in response"}
+    end
+  end
+
+  defp format_version(version, :long), do: version
+
+  defp format_version(version, :short) do
+    case Regex.run(@semver_pattern, version) do
+      [_, semver] -> semver
+      nil -> version
     end
   end
 
