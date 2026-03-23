@@ -18,8 +18,8 @@ defmodule Guardsix.Core.SearchRunner do
   Run a search and block until final results arrive.
 
   Polls `Search.get_result/2` until the response contains `"final" => true`.
-  When the API returns `"success" => false` (expired search), the original
-  query is resubmitted automatically.
+  When the API returns a `"Forgotten search"` error (expired search), the
+  original query is resubmitted automatically.
 
   ## Options
 
