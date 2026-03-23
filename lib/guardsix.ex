@@ -103,6 +103,121 @@ defmodule Guardsix do
   alias Guardsix.Data.HttpNotification
   alias Guardsix.Data.Rule
   alias Guardsix.Data.SearchParams
+  alias Guardsix.Net.BaseClient
+
+  @js_version_pattern ~r/JS_VERSION\s*=\s*"([^"]+)"/
+  @is_debug_pattern ~r/IS_DEBUG\s*=\s*eval\("(\w+)"/
+  @default_auth_pattern ~r/DEFAULT_AUTH\s*=\s*"([^"]+)"/
+  @failover_pattern ~r/FAIL_OVER_ENABLED\s*=\s*"(\w+)"/
+  @semver_pattern ~r/^(\d+\.\d+\.\d+)/
+
+  @doc """
+  Fetch the version of a running Guardsix instance from its landing page.
+
+  ## Options
+
+    * `:format` - `:short` (default) returns the semantic version (e.g. `"7.7.1"`),
+                  `:long` returns the full build version (e.g. `"7.7.1.0_1766842968"`)
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
+  ## Examples
+
+      {:ok, "7.7.1"} = Guardsix.version("https://guardsix.example.com")
+      {:ok, "7.7.1.0_1766842968"} = Guardsix.version("https://guardsix.example.com", format: :long)
+
+  """
+  @spec version(String.t(), keyword()) :: {:ok, String.t()} | {:error, term()}
+  def version(base_url, opts \\ []) do
+    format = Keyword.get(opts, :format, :short)
+
+    case scrape_landing_page(base_url, @js_version_pattern, opts) do
+      {:ok, raw_version} -> {:ok, format_version(raw_version, format)}
+      {:error, _} = error -> error
+    end
+  end
+
+  @doc """
+  Check whether a Guardsix instance is running in debug mode.
+
+  ## Options
+
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
+  ## Examples
+
+      {:ok, false} = Guardsix.debug?("https://guardsix.example.com")
+
+  """
+  @spec debug?(String.t(), keyword()) :: {:ok, boolean()} | {:error, term()}
+  def debug?(base_url, opts \\ []) do
+    case scrape_landing_page(base_url, @is_debug_pattern, opts) do
+      {:ok, debug_flag} -> {:ok, String.downcase(debug_flag) == "true"}
+      {:error, _} = error -> error
+    end
+  end
+
+  @doc """
+  Get the default authentication method of a Guardsix instance.
+
+  ## Options
+
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
+  ## Examples
+
+      {:ok, "LogpointAuthentication"} = Guardsix.default_auth("https://guardsix.example.com")
+
+  """
+  @spec default_auth(String.t(), keyword()) :: {:ok, String.t()} | {:error, term()}
+  def default_auth(base_url, opts \\ []) do
+    case scrape_landing_page(base_url, @default_auth_pattern, opts) do
+      {:ok, auth} -> {:ok, auth}
+      {:error, _} = error -> error
+    end
+  end
+
+  @doc """
+  Check whether a Guardsix instance has failover enabled.
+
+  ## Options
+
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
+  ## Examples
+
+      {:ok, false} = Guardsix.failover?("https://guardsix.example.com")
+
+  """
+  @spec failover?(String.t(), keyword()) :: {:ok, boolean()} | {:error, term()}
+  def failover?(base_url, opts \\ []) do
+    case scrape_landing_page(base_url, @failover_pattern, opts) do
+      {:ok, failover_flag} -> {:ok, String.downcase(failover_flag) == "true"}
+      {:error, _} = error -> error
+    end
+  end
+
+  defp scrape_landing_page(base_url, pattern, opts) do
+    ssl_verify = Keyword.get(opts, :ssl_verify, true)
+    req = BaseClient.new(base_url, ssl_verify)
+
+    with {:ok, %{status: 200, body: body}} <- Req.get(req),
+         [_, value] <- Regex.run(pattern, body) do
+      {:ok, value}
+    else
+      {:ok, %{status: status}} -> {:error, "expected HTTP 200, got #{status}"}
+      {:error, error} -> {:error, error}
+      nil -> {:error, "not found in response"}
+    end
+  end
+
+  defp format_version(version, :long), do: version
+
+  defp format_version(version, :short) do
+    case Regex.run(@semver_pattern, version) do
+      [_, semver] -> semver
+      nil -> version
+    end
+  end
 
   @doc """
   Create a client for the Guardsix API.
