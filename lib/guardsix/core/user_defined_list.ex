@@ -68,10 +68,14 @@ defmodule Guardsix.Core.UserDefinedList do
   """
   @spec extract(Session.t(), String.t()) :: {:ok, map()} | {:error, term()}
   def extract(%Session{} = session, id) when is_binary(id) do
-    with :ok <- check_session(session) do
-      BaseClient.decode_response(
-        Req.post(session.req, url: "/UserDefinedList/extract", form: session_fields(session, %{id: id}))
-      )
+    case check_session(session) do
+      :ok ->
+        BaseClient.decode_response(
+          Req.post(session.req, url: "/UserDefinedList/extract", form: session_fields(session, %{id: id}))
+        )
+
+      {:error, _} = error ->
+        error
     end
   end
 
@@ -132,12 +136,116 @@ defmodule Guardsix.Core.UserDefinedList do
   """
   @spec delete(Session.t(), String.t()) :: {:ok, map()} | {:error, term()}
   def delete(%Session{} = session, id) when is_binary(id) do
-    with :ok <- check_session(session) do
-      # id is sent in both the query string and form body to match the LogPoint UI behavior
-      BaseClient.decode_response(
-        Req.post(session.req, url: "/UserDefinedList/delete?id=#{id}", form: session_fields(session, %{id: id}))
-      )
+    case check_session(session) do
+      :ok ->
+        # id is sent in both the query string and form body to match the LogPoint UI behavior
+        BaseClient.decode_response(
+          Req.post(session.req,
+            url: "/UserDefinedList/delete?id=#{id}",
+            form: session_fields(session, %{id: id})
+          )
+        )
+
+      {:error, _} = error ->
+        error
     end
+  end
+
+  @doc """
+  Update a static list by name.
+
+  Looks up the list ID by name (case-insensitive, since LogPoint uppercases names),
+  then delegates to `update_static/3`.
+
+  Requires a `Session` since this endpoint does not support JWT.
+
+  ## Examples
+
+      {:ok, session} = Guardsix.session("https://guardsix.example.com", "admin", "password")
+      UserDefinedList.update_static_by_name(session, "MY_LIST", ["val1", "val2"])
+
+  """
+  @spec update_static_by_name(Session.t(), String.t(), [String.t()]) ::
+          {:ok, map()} | {:error, term()}
+  def update_static_by_name(%Session{} = session, name, values) when is_binary(name) and is_list(values) do
+    case find_id_by_name(session, name) do
+      {:ok, id} -> update_static(session, id, values)
+      {:error, _} = error -> error
+    end
+  end
+
+  @doc """
+  Delete a user-defined list by name.
+
+  Looks up the list ID by name (case-insensitive, since LogPoint uppercases names),
+  then delegates to `delete/2`.
+
+  Requires a `Session` since this endpoint does not support JWT.
+
+  ## Examples
+
+      {:ok, session} = Guardsix.session("https://guardsix.example.com", "admin", "password")
+      UserDefinedList.delete_by_name(session, "MY_LIST")
+
+  """
+  @spec delete_by_name(Session.t(), String.t()) :: {:ok, map()} | {:error, term()}
+  def delete_by_name(%Session{} = session, name) when is_binary(name) do
+    case find_id_by_name(session, name) do
+      {:ok, id} -> delete(session, id)
+      {:error, _} = error -> error
+    end
+  end
+
+  @name_pattern ~r/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,98}[a-zA-Z0-9]$/
+
+  @doc """
+  Validate a list name against LogPoint's naming rules.
+
+  Names must be 2-100 characters, alphanumeric with hyphens and underscores,
+  and must not begin or end with whitespace, hyphens, or underscores.
+  Names are automatically uppercased by LogPoint.
+
+  ## Examples
+
+      :ok = UserDefinedList.validate_name("MY_LIST")
+      {:error, _} = UserDefinedList.validate_name("_invalid")
+
+  """
+  @spec validate_name(String.t()) :: :ok | {:error, String.t()}
+  def validate_name(name) when is_binary(name) do
+    cond do
+      String.length(name) < 2 ->
+        {:error, "name must be at least 2 characters"}
+
+      String.length(name) > 100 ->
+        {:error, "name must be at most 100 characters"}
+
+      not Regex.match?(@name_pattern, name) ->
+        {:error,
+         "name must be alphanumeric with hyphens and underscores, " <>
+           "and must not begin or end with whitespace, hyphens, or underscores"}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp find_id_by_name(%Session{} = session, name) do
+    with :ok <- check_session(session),
+         {:ok, %{"rows" => rows}} <- list_session(session) do
+      target = String.upcase(name)
+
+      case Enum.find(rows, fn entry -> String.upcase(entry["name"] || "") == target end) do
+        %{"id" => id} -> {:ok, id}
+        nil -> {:error, "list not found: #{name}"}
+      end
+    end
+  end
+
+  defp list_session(%Session{} = session) do
+    body = session_fields(session, %{limit: false, return_all_data: true})
+
+    BaseClient.decode_response(Req.post(session.req, url: "/UserDefinedList/lists", form: body))
   end
 
   defp session_fields(%Session{} = session, extra) do
