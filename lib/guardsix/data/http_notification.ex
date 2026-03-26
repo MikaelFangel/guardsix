@@ -17,10 +17,10 @@ defmodule Guardsix.Data.HttpNotification do
     :notify_http,
     :http_format_query,
     :http_body,
-    :http_protocol,
     :dispatch_option,
     :threshold_option,
     :threshold_value,
+    http_protocol: "HTTPS",
     auth: %{auth_type: "None"}
   ]
 
