@@ -1,4 +1,4 @@
-defmodule Guardsix.Net.SearchIncidentClient do
+defmodule Guardsix.Net.CredentialClient do
   @moduledoc false
 
   alias Guardsix.Net.BaseClient

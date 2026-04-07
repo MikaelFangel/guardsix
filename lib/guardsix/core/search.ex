@@ -8,7 +8,7 @@ defmodule Guardsix.Core.Search do
 
   alias Guardsix.Data.Client
   alias Guardsix.Data.SearchParams
-  alias Guardsix.Net.SearchIncidentClient
+  alias Guardsix.Net.CredentialClient
 
   @allowed_types [
     user_preference: :user_preference,
@@ -30,7 +30,7 @@ defmodule Guardsix.Core.Search do
       |> SearchParams.to_form_data()
       |> create_encoded_request()
 
-    SearchIncidentClient.post_form(req(client), "/getsearchlogs", client.credential, request)
+    CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, request)
   end
 
   @doc """
@@ -40,7 +40,7 @@ defmodule Guardsix.Core.Search do
   def get_result(%Client{} = client, search_id) when is_binary(search_id) do
     request = create_encoded_request(%{search_id: search_id})
 
-    SearchIncidentClient.post_form(req(client), "/getsearchlogs", client.credential, request)
+    CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, request)
   end
 
   for {function_name, type} <- @allowed_types do
@@ -56,11 +56,11 @@ defmodule Guardsix.Core.Search do
   end
 
   defp get_allowed_data(%Client{} = client, type) when type in @allowed_type_values do
-    SearchIncidentClient.post_form(req(client), "/getalloweddata", client.credential, %{type: type})
+    CredentialClient.post_form(req(client), "/getalloweddata", client.credential, %{type: type})
   end
 
   defp req(%Client{} = client) do
-    SearchIncidentClient.new(client.base_url, client.ssl_verify)
+    CredentialClient.new(client.base_url, client.ssl_verify)
   end
 
   defp create_encoded_request(params) do
