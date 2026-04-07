@@ -52,7 +52,7 @@ defmodule Guardsix.Core.AlertRule do
   @spec create(Client.t(), Rule.t() | map()) :: {:ok, map()} | {:error, term()}
   def create(%Client{} = client, %Rule{} = rule) do
     with :ok <- Rule.validate(rule) do
-      create(client, Rule.to_map(rule))
+      create(client, Rule.to_payload(rule))
     end
   end
 
@@ -68,7 +68,7 @@ defmodule Guardsix.Core.AlertRule do
   @spec update(Client.t(), String.t(), Rule.t() | map()) :: {:ok, map()} | {:error, term()}
   def update(%Client{} = client, id, %Rule{} = rule) when is_binary(id) do
     with :ok <- Rule.validate(rule) do
-      update(client, id, Rule.to_map(rule))
+      update(client, id, Rule.to_payload(rule))
     end
   end
 
@@ -118,7 +118,7 @@ defmodule Guardsix.Core.AlertRule do
           {:ok, map()} | {:error, term()}
   def create_email_notification(%Client{} = client, %EmailNotification{} = notif) do
     with :ok <- EmailNotification.validate(notif) do
-      body = Map.put(EmailNotification.to_map(notif), :type, "email")
+      body = Map.put(EmailNotification.to_payload(notif), :type, "email")
 
       with_write_token(client, fn token ->
         JwtClient.post_form(
@@ -153,7 +153,7 @@ defmodule Guardsix.Core.AlertRule do
           {:ok, map()} | {:error, term()}
   def create_http_notification(%Client{} = client, %HttpNotification{} = notif) do
     with :ok <- HttpNotification.validate(notif) do
-      body = Map.put(HttpNotification.to_map(notif), :type, "http")
+      body = Map.put(HttpNotification.to_payload(notif), :type, "http")
 
       with_write_token(client, fn token ->
         JwtClient.post_json(

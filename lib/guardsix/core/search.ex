@@ -27,7 +27,7 @@ defmodule Guardsix.Core.Search do
   def get_id(%Client{} = client, %SearchParams{} = query) do
     request =
       query
-      |> SearchParams.to_form_data()
+      |> SearchParams.to_payload()
       |> create_encoded_request()
 
     CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, request)

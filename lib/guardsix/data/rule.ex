@@ -165,7 +165,7 @@ defmodule Guardsix.Data.Rule do
   @doc """
   Convert a `Rule` struct into the nested map format expected by the Guardsix API.
   """
-  def to_map(%__MODULE__{} = rule) do
+  def to_payload(%__MODULE__{} = rule) do
     %{
       name: rule.name,
       description: rule.description || "",

@@ -33,7 +33,7 @@ defmodule Guardsix.Data.SearchParams do
     }
   end
 
-  def to_form_data(%__MODULE__{} = params) do
+  def to_payload(%__MODULE__{} = params) do
     %{
       query: params.query,
       time_range: serialize_time_range(params.time_range),
