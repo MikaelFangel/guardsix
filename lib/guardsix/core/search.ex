@@ -28,7 +28,7 @@ defmodule Guardsix.Core.Search do
     request =
       query
       |> SearchParams.to_payload()
-      |> create_encoded_request()
+      |> encode_request_data()
 
     CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, request)
   end
@@ -38,7 +38,7 @@ defmodule Guardsix.Core.Search do
   """
   @spec get_result(Client.t(), String.t()) :: {:ok, map()} | {:error, term()}
   def get_result(%Client{} = client, search_id) when is_binary(search_id) do
-    request = create_encoded_request(%{search_id: search_id})
+    request = encode_request_data(%{search_id: search_id})
 
     CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, request)
   end
@@ -63,7 +63,5 @@ defmodule Guardsix.Core.Search do
     CredentialClient.new(client.base_url, client.ssl_verify)
   end
 
-  defp create_encoded_request(params) do
-    %{requestData: Jason.encode!(params)}
-  end
+  defp encode_request_data(params), do: %{requestData: Jason.encode!(params)}
 end
