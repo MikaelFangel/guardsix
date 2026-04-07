@@ -26,8 +26,8 @@ defmodule Guardsix.Data.EmailNotification do
   @type t :: %__MODULE__{
           ids: [String.t()],
           email_emails: [String.t()],
-          email_subject: String.t() | nil,
-          email_template: String.t() | nil,
+          email_subject: String.t(),
+          email_template: String.t(),
           simple_view: boolean() | nil,
           notify_email: boolean() | nil,
           dispatch_option: String.t() | nil,
@@ -39,7 +39,7 @@ defmodule Guardsix.Data.EmailNotification do
           threshold_value: number() | nil
         }
 
-  @required_fields [:ids, :email_emails]
+  @required_fields [:ids, :email_emails, :subject, :email_template]
 
   @spec validate(t()) :: :ok | {:error, [String.t()]}
   def validate(%__MODULE__{} = notif) do
