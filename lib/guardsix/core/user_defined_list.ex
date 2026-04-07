@@ -15,7 +15,7 @@ defmodule Guardsix.Core.UserDefinedList do
   alias Guardsix.Auth.JwtProvider
   alias Guardsix.Data.Client
   alias Guardsix.Data.Session
-  alias Guardsix.Net.AlertRuleClient
+  alias Guardsix.Net.JwtClient
   alias Guardsix.Net.BaseClient
 
   @doc """
@@ -36,7 +36,7 @@ defmodule Guardsix.Core.UserDefinedList do
   @spec list(Client.t(), map()) :: {:ok, map()} | {:error, term()}
   def list(%Client{} = client, params \\ %{}) do
     with_read_token(client, fn token ->
-      AlertRuleClient.get(req(client), "/UserDefinedList/lists_api", token, params)
+      JwtClient.get(req(client), "/UserDefinedList/lists_api", token, params)
     end)
   end
 
@@ -51,7 +51,7 @@ defmodule Guardsix.Core.UserDefinedList do
     }
 
     with_write_token(client, fn token ->
-      AlertRuleClient.post_multipart(req(client), "/UserDefinedList/import_api", token, body)
+      JwtClient.post_multipart(req(client), "/UserDefinedList/import_api", token, body)
     end)
   end
 
@@ -271,6 +271,6 @@ defmodule Guardsix.Core.UserDefinedList do
   end
 
   defp req(%Client{} = client) do
-    AlertRuleClient.new(client.base_url, client.ssl_verify)
+    JwtClient.new(client.base_url, client.ssl_verify)
   end
 end

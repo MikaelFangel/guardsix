@@ -1,4 +1,4 @@
-defmodule Guardsix.Net.AlertRuleClient do
+defmodule Guardsix.Net.JwtClient do
   @moduledoc false
 
   alias Guardsix.Net.BaseClient
