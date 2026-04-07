@@ -4,7 +4,6 @@ defmodule Guardsix.Data.SearchParams do
 
   Built via `Guardsix.search_params/4,5`.
   """
-  @derive Jason.Encoder
   @enforce_keys [:query, :time_range, :limit, :repos]
   defstruct [:query, :time_range, :limit, :repos]
 
