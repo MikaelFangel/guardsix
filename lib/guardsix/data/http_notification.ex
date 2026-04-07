@@ -11,6 +11,7 @@ defmodule Guardsix.Data.HttpNotification do
   @enforce_keys [:ids, :http_url, :http_request_type]
   defstruct [
     :ids,
+    :auth,
     :http_url,
     :http_request_type,
     :http_querystring,
@@ -20,8 +21,7 @@ defmodule Guardsix.Data.HttpNotification do
     :dispatch_option,
     :threshold_option,
     :threshold_value,
-    http_protocol: "HTTPS",
-    auth: %{auth_type: "None"}
+    http_protocol: "HTTPS"
   ]
 
   @type t :: %__MODULE__{
@@ -115,11 +115,14 @@ defmodule Guardsix.Data.HttpNotification do
       http_body: notif.http_body,
       protocol: notif.http_protocol,
       dispatch_option: notif.dispatch_option,
-      http_header: Jason.encode!(notif.auth),
+      http_header: unwrap_header(notif.auth),
       http_threshold_option: notif.threshold_option,
       http_threshold_value: notif.threshold_value
     }
     |> Enum.reject(fn {_k, v} -> is_nil(v) end)
     |> Map.new()
   end
+
+  defp unwrap_header(nil), do: nil
+  defp unwrap_header(header), do: Jason.encode!(header)
 end
