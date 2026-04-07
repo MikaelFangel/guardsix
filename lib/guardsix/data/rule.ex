@@ -166,9 +166,9 @@ defmodule Guardsix.Data.Rule do
   Convert a `Rule` struct into the nested map format expected by the Guardsix API.
   """
   def to_payload(%__MODULE__{} = rule) do
-    %{
+    reject_nil(%{
       name: rule.name,
-      description: rule.description || "",
+      description: rule.description,
       search_params: build_search_params(rule),
       incident_condition: %{
         condition_option: rule.threshold_option,
@@ -181,43 +181,44 @@ defmodule Guardsix.Data.Rule do
         logsources: rule.log_sources,
         metadata: build_metadata(rule.metadata)
       },
-      incident_ownership: %{
-        assignee: rule.assignee,
-        visible_to_usergroups: rule.user_groups
-      },
+      incident_ownership: %{assignee: rule.assignee, visible_to_usergroups: rule.user_groups},
       incident_display_data: %{
         apply_jinja_template: rule.apply_jinja_template,
         simple_view: rule.simple_view,
-        jinja_template: rule.jinja_template || ""
+        jinja_template: rule.jinja_template
       },
-      foureyes: %{
-        original_data: rule.foureyes
-      }
-    }
-  end
-
-  defp build_search_params(rule) do
-    reject_nil(%{
-      query: rule.query,
-      repos: rule.repos,
-      limit: rule.limit || 100,
-      flush_on_trigger: rule.flush_on_trigger,
-      search_interval_minute: rule.search_interval,
-      delay_interval_minute: rule.delay_interval || 0,
-      throttling_enabled: rule.throttling_enabled,
-      throttling_field: rule.throttling_field || "",
-      throttling_time_range: rule.throttling_time_range || 0,
-      timerange_day: rule.time_range_day,
-      timerange_hour: rule.time_range_hour,
-      timerange_minute: rule.time_range_minute
+      foureyes: %{original_data: rule.foureyes}
     })
   end
 
-  defp reject_nil(map), do: Map.reject(map, fn {_, v} -> is_nil(v) end)
-
-  defp build_metadata(meta) when map_size(meta) == 0, do: []
-
-  defp build_metadata(meta) do
-    Enum.map(meta, fn {field, value} -> %{field: field, value: value} end)
+  defp build_search_params(rule) do
+    %{
+      query: rule.query,
+      repos: rule.repos,
+      limit: rule.limit,
+      flush_on_trigger: rule.flush_on_trigger,
+      search_interval_minute: rule.search_interval,
+      delay_interval_minute: rule.delay_interval,
+      throttling_enabled: rule.throttling_enabled,
+      throttling_field: rule.throttling_field,
+      throttling_time_range: rule.throttling_time_range,
+      timerange_day: rule.time_range_day,
+      timerange_hour: rule.time_range_hour,
+      timerange_minute: rule.time_range_minute
+    }
   end
+
+  # Doesn't reject empty maps on purpose because their parents can be mandatory
+  defp reject_nil(map) when is_map(map) do
+    map
+    |> Enum.map(fn
+      {k, v} when is_map(v) -> {k, reject_nil(v)}
+      pair -> pair
+    end)
+    |> Enum.reject(fn {_, v} -> is_nil(v) end)
+    |> Map.new()
+  end
+
+  defp build_metadata(%{}), do: nil
+  defp build_metadata(meta), do: Enum.map(meta, fn {field, value} -> %{field: field, value: value} end)
 end
