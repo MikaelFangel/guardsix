@@ -39,14 +39,6 @@ defmodule Guardsix.Data.HttpNotification do
           auth: map()
         }
 
-  @request_types %{
-    get: "GET",
-    post: "POST",
-    put: "PUT",
-    patch: "PATCH",
-    delete: "DELETE"
-  }
-
   @required_fields [:ids, :http_url, :http_request_type]
 
   @spec validate(t()) :: :ok | {:error, [String.t()]}
@@ -66,12 +58,20 @@ defmodule Guardsix.Data.HttpNotification do
   defp blank?([]), do: true
   defp blank?(_), do: false
 
-  def new(ids, url, request_type) when is_list(ids) and is_binary(url) and is_atom(request_type) do
-    %__MODULE__{
-      ids: ids,
-      http_url: url,
-      http_request_type: Map.fetch!(@request_types, request_type)
-    }
+  for {request_type_atom, request_type_string} <- [
+        get: "GET",
+        post: "POST",
+        put: "PUT",
+        patch: "PATCH",
+        delete: "DELETE"
+      ] do
+    def new(ids, url, unquote(request_type_atom)) when is_list(ids) and is_binary(url) do
+      %__MODULE__{
+        ids: ids,
+        http_url: url,
+        http_request_type: unquote(request_type_string)
+      }
+    end
   end
 
   def querystring(%__MODULE__{} = notif, qs), do: %{notif | http_querystring: qs}
