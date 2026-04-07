@@ -12,7 +12,7 @@ defmodule Guardsix.Net.AlertRuleClient do
   end
 
   for {function_name, body_opt} <- [
-        post: :json,
+        post_json: :json,
         post_form: :form,
         post_multipart: :form_multipart
       ] do

@@ -58,7 +58,7 @@ defmodule Guardsix.Core.AlertRule do
 
   def create(%Client{} = client, rule) when is_map(rule) do
     with_write_token(client, fn token ->
-      AlertRuleClient.post(req(client), "/AlertRules/create_api", token, rule)
+      AlertRuleClient.post_json(req(client), "/AlertRules/create_api", token, rule)
     end)
   end
 
@@ -74,7 +74,7 @@ defmodule Guardsix.Core.AlertRule do
 
   def update(%Client{} = client, id, rule) when is_binary(id) and is_map(rule) do
     with_write_token(client, fn token ->
-      AlertRuleClient.post(req(client), "/AlertRules/update_api", token, Map.put(rule, :id, id))
+      AlertRuleClient.post_json(req(client), "/AlertRules/update_api", token, Map.put(rule, :id, id))
     end)
   end
 
@@ -89,7 +89,7 @@ defmodule Guardsix.Core.AlertRule do
     @spec unquote(function_name)(Client.t(), [String.t()]) :: {:ok, map()} | {:error, term()}
     def unquote(function_name)(%Client{} = client, ids) when is_list(ids) do
       with_write_token(client, fn token ->
-        AlertRuleClient.post(req(client), "/AlertRules/#{unquote(path)}", token, %{ids: ids})
+        AlertRuleClient.post_json(req(client), "/AlertRules/#{unquote(path)}", token, %{ids: ids})
       end)
     end
   end
@@ -156,7 +156,7 @@ defmodule Guardsix.Core.AlertRule do
       body = Map.put(HttpNotification.to_map(notif), :type, "http")
 
       with_write_token(client, fn token ->
-        AlertRuleClient.post(
+        AlertRuleClient.post_json(
           req(client),
           "/pluggables/Notification/HTTPNotification/create_api",
           token,
@@ -172,7 +172,7 @@ defmodule Guardsix.Core.AlertRule do
     body = Map.merge(params, %{ids: ids, type: "http"})
 
     with_write_token(client, fn token ->
-      AlertRuleClient.post(
+      AlertRuleClient.post_json(
         req(client),
         "/pluggables/Notification/HTTPNotification/create_api",
         token,

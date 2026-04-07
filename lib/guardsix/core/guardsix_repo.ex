@@ -16,7 +16,7 @@ defmodule Guardsix.Core.GuardsixRepo do
   def list(%Client{} = client) do
     case JwtProvider.logsource_read_token(client.credential) do
       {:ok, token, _claims} ->
-        AlertRuleClient.post(req(client), "/Repo/get_all_searchable_logpoint", token, %{})
+        AlertRuleClient.post_json(req(client), "/Repo/get_all_searchable_logpoint", token, %{})
 
       {:error, _reason} = error ->
         error
