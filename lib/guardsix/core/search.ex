@@ -25,12 +25,12 @@ defmodule Guardsix.Core.Search do
   """
   @spec get_id(Client.t(), SearchParams.t()) :: {:ok, map()} | {:error, term()}
   def get_id(%Client{} = client, %SearchParams{} = query) do
-    request =
+    body =
       query
       |> SearchParams.to_payload()
       |> encode_request_data()
 
-    CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, request)
+    CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, body)
   end
 
   @doc """
@@ -38,9 +38,9 @@ defmodule Guardsix.Core.Search do
   """
   @spec get_result(Client.t(), String.t()) :: {:ok, map()} | {:error, term()}
   def get_result(%Client{} = client, search_id) when is_binary(search_id) do
-    request = encode_request_data(%{search_id: search_id})
+    body = encode_request_data(%{search_id: search_id})
 
-    CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, request)
+    CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, body)
   end
 
   for {function_name, type} <- @allowed_types do
