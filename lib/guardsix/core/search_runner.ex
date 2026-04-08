@@ -37,16 +37,19 @@ defmodule Guardsix.Core.SearchRunner do
     polling_interval = Keyword.get(opts, :polling_interval, @default_polling_interval)
     max_attempts = Keyword.get(opts, :max_attempts, @default_max_attempts)
 
-    with {:ok, %{"search_id" => search_id}} <- Search.get_id(client, query) do
-      poll(client, query, search_id, polling_interval, max_attempts)
+    case Search.get_id(client, query) do
+      {:ok, %{"search_id" => search_id}} ->
+        poll(client, query, search_id, polling_interval, max_attempts)
+
+      {:error, error} ->
+        {:error, error}
     end
   end
 
   defp poll(client, query, search_id, polling_interval, max_attempts, attempt \\ 1)
 
-  defp poll(_client, _query, _search_id, _polling_interval, max_attempts, attempt) when attempt > max_attempts do
-    {:error, :max_attempts_exceeded}
-  end
+  defp poll(_client, _query, _search_id, _polling_interval, max_attempts, attempt) when attempt > max_attempts,
+    do: {:error, :max_attempts_exceeded}
 
   defp poll(client, query, search_id, polling_interval, max_attempts, attempt) do
     case Search.get_result(client, search_id) do
