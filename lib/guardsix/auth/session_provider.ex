@@ -15,6 +15,7 @@ defmodule Guardsix.Auth.SessionProvider do
   @session_pattern ~r/session=([^;]+)/
   @expires_pattern ~r/Expires=([^;]+)/
   @session_ttl_seconds 24 * 60 * 60
+  @browser_user_agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
   @spec login(String.t(), String.t(), String.t(), keyword()) ::
           {:ok, Session.t()} | {:error, term()}
@@ -26,7 +27,9 @@ defmodule Guardsix.Auth.SessionProvider do
   def login(base_url, username, password, opts \\ []) do
     ssl_verify = Keyword.get(opts, :ssl_verify, true)
     auth_method = Keyword.get(opts, :auth_method, @default_auth_method)
-    req = BaseClient.new(base_url, ssl_verify)
+    req =
+      BaseClient.new(base_url, ssl_verify)
+      |> Req.merge(headers: [{"user-agent", @browser_user_agent}])
 
     with {:ok, %{body: body, headers: headers}} <- fetch_page(req),
          {:ok, csrf_token} <- extract_csrf_token(body),
