@@ -56,24 +56,7 @@ defmodule Guardsix.Core.UserDefinedListBySession do
   def update_static(%Session{} = session, id, values) when is_binary(id) and is_list(values) do
     case extract(session, id) do
       {:ok, %{"data" => data}} ->
-        body =
-          session_fields(session, %{
-            requestType: "formsubmit",
-            launchType: "popup",
-            id: id,
-            list_type: data["list_type"] || "static_list",
-            s_name: data["s_name"] || "",
-            lists: Jason.encode!(values),
-            lists_vendor: data["lists_vendor"] || "",
-            d_name: data["d_name"] || "",
-            source_type: data["source_type"] || "DynamicList",
-            source_id: data["source_id"] || "",
-            agelimit_day: data["agelimit_day"] || "0",
-            agelimit_hour: data["agelimit_hour"] || "0",
-            agelimit_minute: data["agelimit_minute"] || "30",
-            agelimit_second: data["agelimit_second"] || "0"
-          })
-
+        body = session_fields(session, build_update_body(id, data, values))
         BaseClient.decode_response(Req.post(session.req, url: "/UserDefinedList/create", form: body))
 
       error ->
@@ -162,6 +145,40 @@ defmodule Guardsix.Core.UserDefinedListBySession do
     body = session_fields(session, %{limit: false, return_all_data: true})
 
     BaseClient.decode_response(Req.post(session.req, url: "/UserDefinedList/lists", form: body))
+  end
+
+  @update_defaults %{
+    "list_type" => "static_list",
+    "s_name" => "",
+    "lists_vendor" => "",
+    "d_name" => "",
+    "source_type" => "DynamicList",
+    "source_id" => "",
+    "agelimit_day" => "0",
+    "agelimit_hour" => "0",
+    "agelimit_minute" => "30",
+    "agelimit_second" => "0"
+  }
+
+  defp build_update_body(id, data, values) do
+    data = Map.merge(@update_defaults, Map.take(data, Map.keys(@update_defaults)))
+
+    %{
+      requestType: "formsubmit",
+      launchType: "popup",
+      id: id,
+      list_type: data["list_type"],
+      s_name: data["s_name"],
+      lists: Jason.encode!(values),
+      lists_vendor: data["lists_vendor"],
+      d_name: data["d_name"],
+      source_type: data["source_type"],
+      source_id: data["source_id"],
+      agelimit_day: data["agelimit_day"],
+      agelimit_hour: data["agelimit_hour"],
+      agelimit_minute: data["agelimit_minute"],
+      agelimit_second: data["agelimit_second"]
+    }
   end
 
   defp session_fields(%Session{} = session, extra) do
