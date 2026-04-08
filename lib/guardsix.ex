@@ -86,9 +86,16 @@ defmodule Guardsix do
 
       alias Guardsix.Core.GuardsixRepo
       alias Guardsix.Core.UserDefinedList
+      alias Guardsix.Core.UserDefinedListBySession
 
       {:ok, repos} = GuardsixRepo.list(client)
       {:ok, lists} = UserDefinedList.list(client)
+
+      # Session-based operations (unstable)
+      {:ok, session} = Guardsix.session("https://guardsix.example.com", "admin", "password")
+      {:ok, data} = UserDefinedListBySession.extract(session, "list-id")
+      {:ok, _} = UserDefinedListBySession.update_static_by_name(session, "MY_LIST", ["val1"])
+      {:ok, _} = UserDefinedListBySession.delete_by_name(session, "MY_LIST")
 
   ## SSL
 
