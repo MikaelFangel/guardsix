@@ -86,15 +86,15 @@ defmodule Guardsix.Data.HttpNotification do
   end
 
   def api_token_auth(%__MODULE__{} = notif, key, value) do
-    %{notif | auth: %{auth_type: "API Token", api_key: key, api_value: value}}
+    %{notif | auth: %{auth_type: "api_token", auth_key: key, auth_value: value}}
   end
 
   def basic_auth(%__MODULE__{} = notif, username, password) do
-    %{notif | auth: %{auth_type: "Basic Auth", username: username, password: password}}
+    %{notif | auth: %{auth_type: "basic_auth", auth_key: username, auth_pass: password}}
   end
 
   def bearer_auth(%__MODULE__{} = notif, token) do
-    %{notif | auth: %{auth_type: "Bearer Token", bearer_token: token}}
+    %{notif | auth: %{auth_type: "bearer_token", auth_key: token}}
   end
 
   def threshold(%__MODULE__{} = notif, option, value) when is_atom(option) do
