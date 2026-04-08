@@ -27,8 +27,10 @@ defmodule Guardsix.Auth.SessionProvider do
   def login(base_url, username, password, opts \\ []) do
     ssl_verify = Keyword.get(opts, :ssl_verify, true)
     auth_method = Keyword.get(opts, :auth_method, @default_auth_method)
+
     req =
-      BaseClient.new(base_url, ssl_verify)
+      base_url
+      |> BaseClient.new(ssl_verify)
       |> Req.merge(headers: [{"user-agent", @browser_user_agent}])
 
     with {:ok, %{body: body, headers: headers}} <- fetch_page(req),
