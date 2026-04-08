@@ -165,6 +165,9 @@ defmodule Guardsix.Data.Rule do
   @doc """
   Convert a `Rule` struct into the nested map format expected by the Guardsix API.
   """
+  @deprecated "Use to_payload/1 instead"
+  def to_map(rule), do: to_payload(rule)
+
   def to_payload(%__MODULE__{} = rule) do
     reject_nil(%{
       name: rule.name,
