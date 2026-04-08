@@ -25,7 +25,8 @@ Domain logic lives under `Guardsix.Core.*`:
 - `Incident` — incident listing, state changes, comments
 - `AlertRule` — alert rule CRUD, notifications (includes `update/3` and `get_notification/3`)
 - `GuardsixRepo` — searchable repos
-- `UserDefinedList` — user-defined lists
+- `UserDefinedList` — user-defined lists (JWT, stable)
+- `UserDefinedListBySession` — session-based list operations: extract, update, delete (unstable)
 
 Builder structs live under `Guardsix.Data.*`:
 - `Rule` — alert rule builder (pipe through setter functions, pass to `AlertRule.create/2`)

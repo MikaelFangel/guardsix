@@ -86,9 +86,16 @@ defmodule Guardsix do
 
       alias Guardsix.Core.GuardsixRepo
       alias Guardsix.Core.UserDefinedList
+      alias Guardsix.Core.UserDefinedListBySession
 
       {:ok, repos} = GuardsixRepo.list(client)
       {:ok, lists} = UserDefinedList.list(client)
+
+      # Session-based operations (unstable)
+      {:ok, session} = Guardsix.session("https://guardsix.example.com", "admin", "password")
+      {:ok, data} = UserDefinedListBySession.extract(session, "list-id")
+      {:ok, _} = UserDefinedListBySession.update_static_by_name(session, "MY_LIST", ["val1"])
+      {:ok, _} = UserDefinedListBySession.delete_by_name(session, "MY_LIST")
 
   ## SSL
 
@@ -217,6 +224,29 @@ defmodule Guardsix do
       [_, semver] -> semver
       nil -> version
     end
+  end
+
+  @doc """
+  Create an authenticated session for UI endpoints that do not support JWT.
+
+  > #### Warning {: .warning}
+  >
+  > This relies on internal LogPoint UI endpoints and may break if LogPoint
+  > changes its login flow, CSRF handling, or page structure.
+
+  ## Options
+
+    * `:ssl_verify` - verify SSL certificates (default: `true`)
+
+  ## Examples
+
+      {:ok, session} = Guardsix.session("https://guardsix.example.com", "admin", "password")
+
+  """
+  @spec session(String.t(), String.t(), String.t(), keyword()) ::
+          {:ok, Guardsix.Data.Session.t()} | {:error, term()}
+  def session(base_url, username, password, opts \\ []) do
+    Guardsix.Auth.SessionProvider.login(base_url, username, password, opts)
   end
 
   @doc """

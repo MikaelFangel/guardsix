@@ -7,7 +7,7 @@ defmodule Guardsix.Core.GuardsixRepo do
 
   alias Guardsix.Auth.JwtProvider
   alias Guardsix.Data.Client
-  alias Guardsix.Net.AlertRuleClient
+  alias Guardsix.Net.JwtClient
 
   @doc """
   List all searchable repos.
@@ -16,7 +16,7 @@ defmodule Guardsix.Core.GuardsixRepo do
   def list(%Client{} = client) do
     case JwtProvider.logsource_read_token(client.credential) do
       {:ok, token, _claims} ->
-        AlertRuleClient.post(req(client), "/Repo/get_all_searchable_logpoint", token, %{})
+        JwtClient.post_json(req(client), "/Repo/get_all_searchable_logpoint", token, %{})
 
       {:error, _reason} = error ->
         error
@@ -24,6 +24,6 @@ defmodule Guardsix.Core.GuardsixRepo do
   end
 
   defp req(%Client{} = client) do
-    AlertRuleClient.new(client.base_url, client.ssl_verify)
+    JwtClient.new(client.base_url, client.ssl_verify)
   end
 end

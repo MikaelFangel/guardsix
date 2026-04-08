@@ -8,7 +8,7 @@ defmodule Guardsix.Core.Search do
 
   alias Guardsix.Data.Client
   alias Guardsix.Data.SearchParams
-  alias Guardsix.Net.SearchIncidentClient
+  alias Guardsix.Net.CredentialClient
 
   @allowed_types [
     user_preference: :user_preference,
@@ -25,12 +25,12 @@ defmodule Guardsix.Core.Search do
   """
   @spec get_id(Client.t(), SearchParams.t()) :: {:ok, map()} | {:error, term()}
   def get_id(%Client{} = client, %SearchParams{} = query) do
-    request =
+    body =
       query
-      |> SearchParams.to_form_data()
-      |> create_encoded_request()
+      |> SearchParams.to_payload()
+      |> encode_request_data()
 
-    SearchIncidentClient.post_form(req(client), "/getsearchlogs", client.credential, request)
+    CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, body)
   end
 
   @doc """
@@ -38,9 +38,9 @@ defmodule Guardsix.Core.Search do
   """
   @spec get_result(Client.t(), String.t()) :: {:ok, map()} | {:error, term()}
   def get_result(%Client{} = client, search_id) when is_binary(search_id) do
-    request = create_encoded_request(%{search_id: search_id})
+    body = encode_request_data(%{search_id: search_id})
 
-    SearchIncidentClient.post_form(req(client), "/getsearchlogs", client.credential, request)
+    CredentialClient.post_form(req(client), "/getsearchlogs", client.credential, body)
   end
 
   for {function_name, type} <- @allowed_types do
@@ -56,14 +56,12 @@ defmodule Guardsix.Core.Search do
   end
 
   defp get_allowed_data(%Client{} = client, type) when type in @allowed_type_values do
-    SearchIncidentClient.post_form(req(client), "/getalloweddata", client.credential, %{type: type})
+    CredentialClient.post_form(req(client), "/getalloweddata", client.credential, %{type: type})
   end
 
   defp req(%Client{} = client) do
-    SearchIncidentClient.new(client.base_url, client.ssl_verify)
+    CredentialClient.new(client.base_url, client.ssl_verify)
   end
 
-  defp create_encoded_request(params) do
-    %{requestData: Jason.encode!(params)}
-  end
+  defp encode_request_data(params), do: %{requestData: Jason.encode!(params)}
 end

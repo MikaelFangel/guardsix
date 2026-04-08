@@ -3,11 +3,14 @@ defmodule Guardsix.Core.UserDefinedList do
   Manage user-defined lists in Guardsix.
 
   Wraps the [User Defined Lists API](https://docs.guardsix.com/siem/product-docs/readme/siem_api_reference/user-defined-lists-api).
+
+  For session-based operations (`extract`, `update_static`, `delete`), see
+  `Guardsix.Core.UserDefinedListBySession`.
   """
 
   alias Guardsix.Auth.JwtProvider
   alias Guardsix.Data.Client
-  alias Guardsix.Net.AlertRuleClient
+  alias Guardsix.Net.JwtClient
 
   @doc """
   List user defined lists.
@@ -27,7 +30,7 @@ defmodule Guardsix.Core.UserDefinedList do
   @spec list(Client.t(), map()) :: {:ok, map()} | {:error, term()}
   def list(%Client{} = client, params \\ %{}) do
     with_read_token(client, fn token ->
-      AlertRuleClient.get(req(client), "/UserDefinedList/lists_api", token, params)
+      JwtClient.get(req(client), "/UserDefinedList/lists_api", token, params)
     end)
   end
 
@@ -42,8 +45,42 @@ defmodule Guardsix.Core.UserDefinedList do
     }
 
     with_write_token(client, fn token ->
-      AlertRuleClient.post_multipart(req(client), "/UserDefinedList/import_api", token, body)
+      JwtClient.post_multipart(req(client), "/UserDefinedList/import_api", token, body)
     end)
+  end
+
+  @name_pattern ~r/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,98}[a-zA-Z0-9]$/
+
+  @doc """
+  Validate a list name against LogPoint's naming rules.
+
+  Names must be 2-100 characters, alphanumeric with hyphens and underscores,
+  and must not begin or end with whitespace, hyphens, or underscores.
+  Names are automatically uppercased by LogPoint.
+
+  ## Examples
+
+      :ok = UserDefinedList.validate_name("MY_LIST")
+      {:error, _} = UserDefinedList.validate_name("_invalid")
+
+  """
+  @spec validate_name(String.t()) :: :ok | {:error, String.t()}
+  def validate_name(name) when is_binary(name) do
+    cond do
+      String.length(name) < 2 ->
+        {:error, "name must be at least 2 characters"}
+
+      String.length(name) > 100 ->
+        {:error, "name must be at most 100 characters"}
+
+      not Regex.match?(@name_pattern, name) ->
+        {:error,
+         "name must be alphanumeric with hyphens and underscores, " <>
+           "and must not begin or end with whitespace, hyphens, or underscores"}
+
+      true ->
+        :ok
+    end
   end
 
   defp with_read_token(%Client{} = client, fun) do
@@ -61,6 +98,6 @@ defmodule Guardsix.Core.UserDefinedList do
   end
 
   defp req(%Client{} = client) do
-    AlertRuleClient.new(client.base_url, client.ssl_verify)
+    JwtClient.new(client.base_url, client.ssl_verify)
   end
 end

@@ -11,6 +11,7 @@ defmodule Guardsix.Data.HttpNotification do
   @enforce_keys [:ids, :http_url, :http_request_type]
   defstruct [
     :ids,
+    :auth,
     :http_url,
     :http_request_type,
     :http_querystring,
@@ -20,8 +21,7 @@ defmodule Guardsix.Data.HttpNotification do
     :dispatch_option,
     :threshold_option,
     :threshold_value,
-    http_protocol: "HTTPS",
-    auth: %{auth_type: "None"}
+    http_protocol: "HTTPS"
   ]
 
   @type t :: %__MODULE__{
@@ -38,14 +38,6 @@ defmodule Guardsix.Data.HttpNotification do
           threshold_value: number() | nil,
           auth: map()
         }
-
-  @request_types %{
-    get: "GET",
-    post: "POST",
-    put: "PUT",
-    patch: "PATCH",
-    delete: "DELETE"
-  }
 
   @required_fields [:ids, :http_url, :http_request_type]
 
@@ -66,12 +58,20 @@ defmodule Guardsix.Data.HttpNotification do
   defp blank?([]), do: true
   defp blank?(_), do: false
 
-  def new(ids, url, request_type) when is_list(ids) and is_binary(url) and is_atom(request_type) do
-    %__MODULE__{
-      ids: ids,
-      http_url: url,
-      http_request_type: Map.fetch!(@request_types, request_type)
-    }
+  for {request_type_atom, request_type_string} <- [
+        get: "GET",
+        post: "POST",
+        put: "PUT",
+        patch: "PATCH",
+        delete: "DELETE"
+      ] do
+    def new(ids, url, unquote(request_type_atom)) when is_list(ids) and is_binary(url) do
+      %__MODULE__{
+        ids: ids,
+        http_url: url,
+        http_request_type: unquote(request_type_string)
+      }
+    end
   end
 
   def querystring(%__MODULE__{} = notif, qs), do: %{notif | http_querystring: qs}
@@ -86,15 +86,15 @@ defmodule Guardsix.Data.HttpNotification do
   end
 
   def api_token_auth(%__MODULE__{} = notif, key, value) do
-    %{notif | auth: %{auth_type: "API Token", api_key: key, api_value: value}}
+    %{notif | auth: %{auth_type: "api_token", auth_key: key, auth_value: value}}
   end
 
   def basic_auth(%__MODULE__{} = notif, username, password) do
-    %{notif | auth: %{auth_type: "Basic Auth", username: username, password: password}}
+    %{notif | auth: %{auth_type: "basic_auth", auth_key: username, auth_pass: password}}
   end
 
   def bearer_auth(%__MODULE__{} = notif, token) do
-    %{notif | auth: %{auth_type: "Bearer Token", bearer_token: token}}
+    %{notif | auth: %{auth_type: "bearer_token", auth_key: token}}
   end
 
   def threshold(%__MODULE__{} = notif, option, value) when is_atom(option) do
@@ -104,7 +104,10 @@ defmodule Guardsix.Data.HttpNotification do
   @doc """
   Convert an `HttpNotification` struct into the flat map format expected by the Guardsix API.
   """
-  def to_map(%__MODULE__{} = notif) do
+  @deprecated "Use to_payload/1 instead"
+  def to_map(notif), do: to_payload(notif)
+
+  def to_payload(%__MODULE__{} = notif) do
     %{
       ids: notif.ids,
       http_url: notif.http_url,
@@ -115,11 +118,14 @@ defmodule Guardsix.Data.HttpNotification do
       http_body: notif.http_body,
       protocol: notif.http_protocol,
       dispatch_option: notif.dispatch_option,
-      http_header: Jason.encode!(notif.auth),
+      http_header: unwrap_header(notif.auth),
       http_threshold_option: notif.threshold_option,
       http_threshold_value: notif.threshold_value
     }
     |> Enum.reject(fn {_k, v} -> is_nil(v) end)
     |> Map.new()
   end
+
+  defp unwrap_header(nil), do: nil
+  defp unwrap_header(header), do: Jason.encode!(header)
 end

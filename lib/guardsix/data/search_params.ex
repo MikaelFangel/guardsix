@@ -4,7 +4,7 @@ defmodule Guardsix.Data.SearchParams do
 
   Built via `Guardsix.search_params/4,5`.
   """
-  @derive Jason.Encoder
+  @enforce_keys [:query, :time_range, :limit, :repos]
   defstruct [:query, :time_range, :limit, :repos]
 
   @type t :: %__MODULE__{
@@ -32,7 +32,10 @@ defmodule Guardsix.Data.SearchParams do
     }
   end
 
-  def to_form_data(%__MODULE__{} = params) do
+  @deprecated "Use to_payload/1 instead"
+  def to_form_data(params), do: to_payload(params)
+
+  def to_payload(%__MODULE__{} = params) do
     %{
       query: params.query,
       time_range: serialize_time_range(params.time_range),

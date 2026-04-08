@@ -162,6 +162,25 @@ alias Guardsix.Core.UserDefinedList
 {:ok, lists} = UserDefinedList.list(client)
 ```
 
+#### Session-Based List Operations
+
+Some user-defined list operations require a browser session since they are not available
+via the JWT API. These are in a separate module and are **unstable**.
+
+```elixir
+alias Guardsix.Core.UserDefinedListBySession
+
+{:ok, session} = Guardsix.session("https://guardsix.example.com", "admin", "password")
+
+{:ok, data} = UserDefinedListBySession.extract(session, "list-id")
+{:ok, _} = UserDefinedListBySession.update_static(session, "list-id", ["val1", "val2"])
+{:ok, _} = UserDefinedListBySession.delete(session, "list-id")
+
+# By-name variants (case-insensitive lookup)
+{:ok, _} = UserDefinedListBySession.update_static_by_name(session, "MY_LIST", ["val1"])
+{:ok, _} = UserDefinedListBySession.delete_by_name(session, "MY_LIST")
+```
+
 ## SSL Configuration
 
 Pass `ssl_verify: false` to disable SSL verification (e.g. for self-signed certificates):

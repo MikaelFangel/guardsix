@@ -7,7 +7,7 @@ defmodule Guardsix.Core.Incident do
   """
 
   alias Guardsix.Data.Client
-  alias Guardsix.Net.SearchIncidentClient
+  alias Guardsix.Net.CredentialClient
 
   @version "0.1"
 
@@ -26,8 +26,8 @@ defmodule Guardsix.Core.Incident do
   """
   @spec list(Client.t(), number(), number(), map()) :: {:ok, map()} | {:error, term()}
   def list(%Client{} = client, start_time, end_time, filters \\ %{}) do
-    body = create_request(%{version: @version, ts_from: start_time, ts_to: end_time})
-    SearchIncidentClient.get(req(client), build_path("/incidents", filters), client.credential, body)
+    body = request_data(%{version: @version, ts_from: start_time, ts_to: end_time})
+    CredentialClient.get(req(client), build_path("/incidents", filters), client.credential, body)
   end
 
   @doc """
@@ -48,8 +48,8 @@ defmodule Guardsix.Core.Incident do
   """
   @spec list_states(Client.t(), number(), number(), map()) :: {:ok, map()} | {:error, term()}
   def list_states(%Client{} = client, start_time, end_time, filters \\ %{}) do
-    body = create_request(%{version: @version, ts_from: start_time, ts_to: end_time})
-    SearchIncidentClient.get(req(client), build_path("/incident_states", filters), client.credential, body)
+    body = request_data(%{version: @version, ts_from: start_time, ts_to: end_time})
+    CredentialClient.get(req(client), build_path("/incident_states", filters), client.credential, body)
   end
 
   @doc """
@@ -57,8 +57,8 @@ defmodule Guardsix.Core.Incident do
   """
   @spec get(Client.t(), String.t(), String.t()) :: {:ok, map()} | {:error, term()}
   def get(%Client{} = client, obj_id, incident_id) do
-    body = create_request(%{incident_obj_id: obj_id, incident_id: incident_id})
-    SearchIncidentClient.get(req(client), "/get_data_from_incident", client.credential, body)
+    body = request_data(%{incident_obj_id: obj_id, incident_id: incident_id})
+    CredentialClient.get(req(client), "/get_data_from_incident", client.credential, body)
   end
 
   @doc """
@@ -66,8 +66,8 @@ defmodule Guardsix.Core.Incident do
   """
   @spec add_comments(Client.t(), list()) :: {:ok, map()} | {:error, term()}
   def add_comments(%Client{} = client, comments) do
-    body = create_request(%{version: @version, states: comments})
-    SearchIncidentClient.post_json(req(client), "/add_incident_comment", client.credential, body)
+    body = request_data(%{version: @version, states: comments})
+    CredentialClient.post_json(req(client), "/add_incident_comment", client.credential, body)
   end
 
   @doc """
@@ -75,8 +75,8 @@ defmodule Guardsix.Core.Incident do
   """
   @spec assign(Client.t(), [String.t()], String.t()) :: {:ok, map()} | {:error, term()}
   def assign(%Client{} = client, incident_ids, assignee) when is_list(incident_ids) do
-    body = create_request(%{version: @version, incident_ids: incident_ids, new_assignee: assignee})
-    SearchIncidentClient.post_json(req(client), "/assign_incident", client.credential, body)
+    body = request_data(%{version: @version, incident_ids: incident_ids, new_assignee: assignee})
+    CredentialClient.post_json(req(client), "/assign_incident", client.credential, body)
   end
 
   for status_change <- ~w(resolve close reopen)a do
@@ -94,22 +94,22 @@ defmodule Guardsix.Core.Incident do
   """
   @spec get_users(Client.t()) :: {:ok, map()} | {:error, term()}
   def get_users(%Client{} = client) do
-    SearchIncidentClient.get(req(client), "/get_users", client.credential)
+    CredentialClient.get(req(client), "/get_users", client.credential)
   end
 
   defp build_path(base, filters) when map_size(filters) == 0, do: base
   defp build_path(base, filters), do: base <> "?" <> URI.encode_query(filters)
 
   defp change_status(%Client{} = client, endpoint, incident_ids) do
-    body = create_request(%{version: @version, incident_ids: incident_ids})
-    SearchIncidentClient.post_json(req(client), endpoint, client.credential, body)
+    body = request_data(%{version: @version, incident_ids: incident_ids})
+    CredentialClient.post_json(req(client), endpoint, client.credential, body)
   end
 
   defp req(%Client{} = client) do
-    SearchIncidentClient.new(client.base_url, client.ssl_verify)
+    CredentialClient.new(client.base_url, client.ssl_verify)
   end
 
-  defp create_request(params) do
+  defp request_data(params) do
     %{requestData: params}
   end
 end
