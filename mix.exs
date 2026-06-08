@@ -27,7 +27,7 @@ defmodule Guardsix.MixProject do
 
   defp deps do
     [
-      {:req, "~> 0.5.15"},
+      {:req, "~> 0.6.1"},
       {:jason, "~> 1.4"},
       {:joken, "~> 2.6"},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
