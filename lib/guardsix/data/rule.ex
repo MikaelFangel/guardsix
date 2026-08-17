@@ -222,6 +222,6 @@ defmodule Guardsix.Data.Rule do
     |> Map.new()
   end
 
-  defp build_metadata(%{}), do: nil
+  defp build_metadata(meta) when map_size(meta) == 0, do: nil
   defp build_metadata(meta), do: Enum.map(meta, fn {field, value} -> %{field: field, value: value} end)
 end
