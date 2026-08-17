@@ -117,7 +117,7 @@ defmodule Guardsix.Auth.SessionProvider do
     end
   end
 
-  defp default_expires, do: DateTime.add(DateTime.utc_now(), @session_ttl_seconds)
+  defp default_expires, do: DateTime.shift(DateTime.utc_now(), second: @session_ttl_seconds)
 
   defp attach_session_cookie(req, headers) do
     case find_cookie(headers, @session_pattern) do
