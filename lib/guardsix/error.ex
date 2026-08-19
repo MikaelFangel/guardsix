@@ -41,35 +41,55 @@ defmodule Guardsix.Error do
           | Validation.t()
 
   @doc false
-  # Which type you get depends on where the reason landed in the body. Field-level detail
-  # arrives under `validationErrors`; token failures say `error` where everything else says `message`.
   @spec from_response(map(), non_neg_integer() | nil) :: t()
   def from_response(body, status) when is_map(body) do
-    errors = flatten(Map.get(body, "validationErrors"))
+    status = resolve_status(body, status)
+    errors = validation_errors(body)
 
     cond do
       map_size(errors) > 0 ->
-        %Validation{errors: errors, status: status(body, status), body: body}
+        %Validation{errors: errors, status: status, body: body}
 
-      token_failure?(body) ->
-        %Auth{message: Map.fetch!(body, "error"), status: status(body, status), body: body}
+      auth?(body, status) ->
+        %Auth{message: message(body), status: status, body: body}
 
       true ->
-        %API{
-          message: message(body),
-          status: status(body, status),
-          error_code: Map.get(body, "error_code"),
-          body: body
-        }
+        %API{message: message(body), status: status, error_code: Map.get(body, "error_code"), body: body}
     end
   end
+
+  defp validation_errors(body) do
+    case Map.get(body, "validationErrors") do
+      nested when is_map(nested) -> flatten(nested)
+      _absent -> detail_errors(Map.get(body, "detail"))
+    end
+  end
+
+  defp detail_errors(entries) when is_list(entries) do
+    entries
+    |> Enum.filter(&is_map/1)
+    |> Map.new(fn entry -> {location(entry), Map.get(entry, "msg") || "is invalid"} end)
+  end
+
+  defp detail_errors(_absent), do: %{}
+
+  defp location(%{"loc" => [_ | _] = loc}), do: Enum.map_join(loc, ".", &to_string/1)
+  defp location(_entry), do: "request"
+
+  defp auth?(body, status), do: token_failure?(body) or status in [401, 403]
 
   defp token_failure?(body), do: is_binary(Map.get(body, "error")) and not is_binary(Map.get(body, "message"))
 
   # Token failures report the status in the body as well as in the response.
-  defp status(body, status), do: status || Map.get(body, "status_code")
+  defp resolve_status(body, status), do: status || Map.get(body, "status_code")
 
-  defp message(body), do: Map.get(body, "message") || Map.get(body, "error") || "the request failed"
+  defp message(body) do
+    Map.get(body, "message") || Map.get(body, "error") || detail_message(Map.get(body, "detail")) ||
+      "the request failed"
+  end
+
+  defp detail_message(detail) when is_binary(detail), do: detail
+  defp detail_message(_other), do: nil
 
   defp flatten(errors) when is_map(errors), do: errors |> Enum.flat_map(&entries/1) |> Map.new()
   defp flatten(_absent), do: %{}

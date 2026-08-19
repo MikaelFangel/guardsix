@@ -75,7 +75,7 @@ error.status  # 422
 
 Nested sections of a rule payload are flattened into dotted keys, so a rejected search interval is keyed `"search_params.search_interval_minute"`.
 
-Do not branch on the status alone. A duplicate alert rule name is answered `200` with `success: false`, and a validation failure can be `200` or `422`.
+Do not branch on the status alone. A duplicate alert rule name is answered `200` with `success: false`, and a validation failure can be `200` or `422`. Both conventions are handled: anything outside `2xx` is an error, and so is a `2xx` carrying `success: false`. A `2xx` with an empty body (such as a `204`) is `{:ok, %{}}`.
 
 ## Search is asynchronous
 
