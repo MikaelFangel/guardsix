@@ -108,9 +108,6 @@ defmodule Guardsix.Data.HttpNotification do
   @doc """
   Convert an `HttpNotification` struct into the flat map format expected by the Guardsix API.
   """
-  @deprecated "Use to_payload/1 instead"
-  def to_map(notif), do: to_payload(notif)
-
   def to_payload(%__MODULE__{} = notif) do
     %{
       ids: notif.ids,
